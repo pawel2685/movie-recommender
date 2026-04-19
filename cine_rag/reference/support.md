@@ -1,11 +1,12 @@
 # Dobrani asystenci AI — Projekt RAG Asystent Filmowy
 
 > Przegląd dostępnych agentów, skilli i instrukcji z repozytorium `awesome-copilot`,
+> Repo: https://github.com/github/awesome-copilot
 > dobranych pod konkretne zadania każdej osoby. Priorytetem jest **Osoba 1**.
 
 ---
 
-## Osoba 1 — Dane i Przetwarzanie ⭐ (Priorytet)
+## Osoba 1 — Dane i Przetwarzanie
 
 Zadania: EDA datasetu TMDB, merge CSV, konwersja do `.txt`, moduł ładowania plików,
 czyszczenie tekstu, chunking dokumentów, pipeline indeksowania.
