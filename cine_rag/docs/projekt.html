@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Projekt RAG — Asystent Filmowy | Podział pracy</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: #0b0d11;
+        color: #d4d4d8;
+        line-height: 1.6;
+        min-height: 100vh;
+      }
+
+      /* === HEADER === */
+      .header {
+        background: linear-gradient(135deg, #111318 0%, #1a1d28 100%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 48px 24px 40px;
+        text-align: center;
+      }
+      .header-tag {
+        display: inline-block;
+        background: rgba(99, 102, 241, 0.15);
+        color: #818cf8;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 4px 14px;
+        border-radius: 20px;
+        margin-bottom: 16px;
+      }
+      .header h1 {
+        font-size: 32px;
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 8px;
+      }
+      .header p {
+        font-size: 15px;
+        color: #71717a;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 24px 60px;
+      }
+
+      /* === SECTION TITLE === */
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 48px 0 24px;
+      }
+      .section-num {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 16px;
+        color: #fff;
+        flex-shrink: 0;
+      }
+      .section-text {
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+      }
+
+      /* === PERSON CARDS === */
+      .persons-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      @media (max-width: 800px) {
+        .persons-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .person-card {
+        border-radius: 16px;
+        padding: 28px 24px;
+        position: relative;
+        overflow: hidden;
+      }
+      .person-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+      }
+
+      /* Person 1 */
+      .p1 {
+        background: linear-gradient(
+          180deg,
+          rgba(59, 130, 246, 0.08) 0%,
+          rgba(59, 130, 246, 0.02) 100%
+        );
+        border: 1px solid rgba(59, 130, 246, 0.15);
+      }
+      .p1::before {
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
+      }
+      .p1-accent {
+        color: #60a5fa;
+      }
+
+      /* Person 2 */
+      .p2 {
+        background: linear-gradient(
+          180deg,
+          rgba(168, 85, 247, 0.08) 0%,
+          rgba(168, 85, 247, 0.02) 100%
+        );
+        border: 1px solid rgba(168, 85, 247, 0.15);
+      }
+      .p2::before {
+        background: linear-gradient(90deg, #a855f7, #c084fc);
+      }
+      .p2-accent {
+        color: #c084fc;
+      }
+
+      /* Person 3 */
+      .p3 {
+        background: linear-gradient(
+          180deg,
+          rgba(34, 197, 94, 0.08) 0%,
+          rgba(34, 197, 94, 0.02) 100%
+        );
+        border: 1px solid rgba(34, 197, 94, 0.15);
+      }
+      .p3::before {
+        background: linear-gradient(90deg, #22c55e, #4ade80);
+      }
+      .p3-accent {
+        color: #4ade80;
+      }
+
+      .person-icon {
+        font-size: 32px;
+        margin-bottom: 12px;
+      }
+      .person-role {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .person-name {
+        font-size: 18px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 16px;
+      }
+
+      .task-list {
+        list-style: none;
+      }
+      .task-list li {
+        position: relative;
+        padding: 8px 0 8px 24px;
+        font-size: 13px;
+        line-height: 1.5;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      }
+      .task-list li:last-child {
+        border-bottom: none;
+      }
+      .task-list li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 14px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .p1 .task-list li::before {
+        background: #3b82f6;
+      }
+      .p2 .task-list li::before {
+        background: #a855f7;
+      }
+      .p3 .task-list li::before {
+        background: #22c55e;
+      }
+
+      .tech-stack {
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .tech-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #52525b;
+        margin-bottom: 8px;
+      }
+      .tech-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .tech-tag {
+        font-size: 11px;
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-weight: 500;
+      }
+      .p1 .tech-tag {
+        background: rgba(59, 130, 246, 0.12);
+        color: #93bbfd;
+      }
+      .p2 .tech-tag {
+        background: rgba(168, 85, 247, 0.12);
+        color: #d4b5fd;
+      }
+      .p3 .tech-tag {
+        background: rgba(34, 197, 94, 0.12);
+        color: #86efac;
+      }
+
+      /* === FLOW DIAGRAM === */
+      .flow-container {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        padding: 32px 24px;
+        overflow-x: auto;
+      }
+
+      .flow-phase-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #52525b;
+        margin-bottom: 16px;
+        padding-left: 4px;
+      }
+
+      .flow-row {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        margin-bottom: 8px;
+        flex-wrap: nowrap;
+        min-width: 700px;
+      }
+
+      .flow-node {
+        border-radius: 10px;
+        padding: 12px 16px;
+        text-align: center;
+        min-width: 120px;
+        flex: 1;
+        max-width: 180px;
+      }
+      .flow-node-icon {
+        font-size: 22px;
+        margin-bottom: 4px;
+      }
+      .flow-node-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+      }
+      .flow-node-sub {
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.5);
+        margin-top: 2px;
+      }
+
+      .fn-p1 {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
+      .fn-p2 {
+        background: rgba(168, 85, 247, 0.1);
+        border: 1px solid rgba(168, 85, 247, 0.2);
+      }
+      .fn-p3 {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+      }
+      .fn-user {
+        background: rgba(251, 191, 36, 0.1);
+        border: 1px solid rgba(251, 191, 36, 0.2);
+      }
+
+      .flow-arrow {
+        color: #3f3f46;
+        font-size: 18px;
+        padding: 0 6px;
+        flex-shrink: 0;
+      }
+      .flow-arrow-down {
+        display: flex;
+        justify-content: center;
+        color: #3f3f46;
+        font-size: 22px;
+        margin: 4px 0;
+        min-width: 700px;
+      }
+
+      .flow-divider {
+        border: none;
+        border-top: 1px dashed rgba(255, 255, 255, 0.08);
+        margin: 20px 0;
+        min-width: 700px;
+      }
+
+      /* === DELIVERABLES === */
+      .del-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      @media (max-width: 800px) {
+        .del-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .del-card {
+        border-radius: 14px;
+        padding: 24px;
+      }
+      .del-card.d1 {
+        background: rgba(59, 130, 246, 0.06);
+        border: 1px solid rgba(59, 130, 246, 0.12);
+      }
+      .del-card.d2 {
+        background: rgba(168, 85, 247, 0.06);
+        border: 1px solid rgba(168, 85, 247, 0.12);
+      }
+      .del-card.d3 {
+        background: rgba(34, 197, 94, 0.06);
+        border: 1px solid rgba(34, 197, 94, 0.12);
+      }
+
+      .del-person {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+
+      .del-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        font-size: 13px;
+      }
+      .del-item:last-child {
+        border-bottom: none;
+      }
+
+      .del-file {
+        font-family: "Fira Code", "SF Mono", monospace;
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 5px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .d1 .del-file {
+        background: rgba(59, 130, 246, 0.15);
+        color: #93bbfd;
+      }
+      .d2 .del-file {
+        background: rgba(168, 85, 247, 0.15);
+        color: #d4b5fd;
+      }
+      .d3 .del-file {
+        background: rgba(34, 197, 94, 0.15);
+        color: #86efac;
+      }
+
+      .del-desc {
+        color: #a1a1aa;
+        font-size: 12px;
+      }
+
+      /* === FOOTER === */
+      .footer {
+        text-align: center;
+        padding: 32px 24px;
+        border-top: 1px solid rgba(255, 255, 255, 0.04);
+        margin-top: 48px;
+        font-size: 12px;
+        color: #3f3f46;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-tag">Projekt studencki — System AI</div>
+      <h1>Asystent RAG do dokumentacji filmowej</h1>
+      <p>
+        System AI odpowiadający na pytania o filmach wyłącznie na podstawie
+        dostarczonej dokumentacji (TMDB 5000). Podział pracy na 3 osoby.
+      </p>
+    </div>
+
+    <div class="container">
+      <!-- ============ 1. ZAKRES OBOWIĄZKÓW ============ -->
+      <div class="section-title">
+        <div
+          class="section-num"
+          style="background: linear-gradient(135deg, #6366f1, #818cf8)"
+        >
+          1
+        </div>
+        <div class="section-text">Zakres obowiązków</div>
+      </div>
+
+      <div class="persons-grid">
+        <!-- OSOBA 1 -->
+        <div class="person-card p1">
+          <div class="person-icon">🗂️</div>
+          <div class="person-role p1-accent">Osoba 1</div>
+          <div class="person-name">Dane i przetwarzanie</div>
+          <ul class="task-list">
+            <li>
+              Pobranie datasetu filmowego (np. TMDB 5000 z Kaggle) i wstępna
+              eksploracja danych (EDA)
+            </li>
+            <li>
+              Łączenie i przetwarzanie danych źródłowych — ekstrakcja gatunków,
+              obsady, reżysera
+            </li>
+            <li>
+              Konwersja każdego filmu do dokumentu tekstowego — tytuł, opis,
+              obsada, gatunki, ocena
+            </li>
+            <li>
+              Napisanie modułu ładowania plików — obsługa formatów .txt i .pdf
+            </li>
+            <li>
+              Czyszczenie tekstu — usunięcie zbędnych znaków bez utraty
+              kluczowych informacji (nazwy, oceny, kody)
+            </li>
+            <li>
+              Podział dokumentów na fragmenty (chunking) — dobór rozmiaru i
+              nakładki (overlap)
+            </li>
+            <li>
+              Skrypt pipeline'u indeksowania — uruchomienie całego procesu jedną
+              komendą
+            </li>
+          </ul>
+          <div class="tech-stack">
+            <div class="tech-label">Obszar technologiczny</div>
+            <div class="tech-tags">
+              <span class="tech-tag">Python</span>
+              <span class="tech-tag">przetwarzanie danych</span>
+              <span class="tech-tag">ekstrakcja tekstu</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- OSOBA 2 -->
+        <div class="person-card p2">
+          <div class="person-icon">🧠</div>
+          <div class="person-role p2-accent">Osoba 2</div>
+          <div class="person-name">Silnik RAG</div>
+          <ul class="task-list">
+            <li>
+              Integracja modelu embeddingowego — zamiana tekstu na wektory
+              liczbowe
+            </li>
+            <li>
+              Budowa bazy wektorowej — zapis i odczyt indeksu oraz metadanych
+            </li>
+            <li>
+              Moduł wyszukiwania — zamiana pytania na wektor, znalezienie
+              najbardziej pasujących fragmentów (top-k)
+            </li>
+            <li>
+              Moduł odpowiedzi — składanie odpowiedzi z fragmentów i dołączanie
+              źródeł
+            </li>
+            <li>
+              Komunikat "Nie znaleziono informacji w dokumentacji" gdy brak
+              trafień
+            </li>
+            <li>
+              Strojenie parametrów — dobór liczby zwracanych fragmentów,
+              testowanie trafności
+            </li>
+            <li>
+              Walidacja jakości — czy pytanie o Nolana zwraca filmy Nolana, nie
+              Tarantino
+            </li>
+            <li>
+              Opcjonalnie: integracja z LLM API do generowania odpowiedzi
+              naturalnym językiem
+            </li>
+          </ul>
+          <div class="tech-stack">
+            <div class="tech-label">Obszar technologiczny</div>
+            <div class="tech-tags">
+              <span class="tech-tag">Python</span>
+              <span class="tech-tag">embeddingi</span>
+              <span class="tech-tag">baza wektorowa</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- OSOBA 3 -->
+        <div class="person-card p3">
+          <div class="person-icon">🖥️</div>
+          <div class="person-role p3-accent">Osoba 3</div>
+          <div class="person-name">Aplikacja i testy</div>
+          <ul class="task-list">
+            <li>
+              Interfejs użytkownika — pole pytania, przycisk, wyświetlanie
+              odpowiedzi i źródeł
+            </li>
+            <li>
+              Sekcja źródeł — wyświetlanie nazwy dokumentu, numeru fragmentu i
+              treści
+            </li>
+            <li>
+              Przygotowanie 15–20 pytań testowych w 4 kategoriach:
+              faktograficzne, porównawcze, proceduralne, negatywne
+            </li>
+            <li>
+              Testowanie jakości — trafność odpowiedzi, brak halucynacji,
+              poprawność źródeł
+            </li>
+            <li>
+              Dokumentacja projektu — instrukcja instalacji i uruchomienia
+              (README)
+            </li>
+            <li>
+              Konfiguracja projektu — lista zależności, zmienne środowiskowe,
+              struktura katalogów
+            </li>
+            <li>
+              Raport z testów — które pytania działają dobrze, które źle i
+              dlaczego
+            </li>
+            <li>Opcjonalnie: historia pytań w sesji, lepszy wygląd UI</li>
+          </ul>
+          <div class="tech-stack">
+            <div class="tech-label">Obszar technologiczny</div>
+            <div class="tech-tags">
+              <span class="tech-tag">Python</span>
+              <span class="tech-tag">interfejs webowy</span>
+              <span class="tech-tag">testowanie</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 2. FLOW DIAGRAM ============ -->
+      <div class="section-title">
+        <div
+          class="section-num"
+          style="background: linear-gradient(135deg, #6366f1, #818cf8)"
+        >
+          2
+        </div>
+        <div class="section-text">Flow działania aplikacji</div>
+      </div>
+
+      <div class="flow-container">
+        <!-- INDEXING -->
+        <div class="flow-phase-label">Indeksowanie (jednorazowo, offline)</div>
+
+        <div class="flow-row">
+          <div class="flow-node fn-p1">
+            <div class="flow-node-icon">📦</div>
+            <div class="flow-node-title">Dataset filmowy</div>
+            <div class="flow-node-sub">dane źródłowe (CSV)</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-p1">
+            <div class="flow-node-icon">🔬</div>
+            <div class="flow-node-title">EDA & Merge</div>
+            <div class="flow-node-sub">eksploracja, łączenie</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-p1">
+            <div class="flow-node-icon">📝</div>
+            <div class="flow-node-title">Dokumenty .txt</div>
+            <div class="flow-node-sub">1 film = 1 plik</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-p1">
+            <div class="flow-node-icon">🧹</div>
+            <div class="flow-node-title">Cleaning</div>
+            <div class="flow-node-sub">preprocessing.py</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-p1">
+            <div class="flow-node-icon">✂️</div>
+            <div class="flow-node-title">Chunking</div>
+            <div class="flow-node-sub">podział na fragmenty</div>
+          </div>
+        </div>
+
+        <div class="flow-arrow-down">↓</div>
+
+        <div class="flow-row">
+          <div class="flow-node fn-p2">
+            <div class="flow-node-icon">🧮</div>
+            <div class="flow-node-title">Embeddingi</div>
+            <div class="flow-node-sub">tekst → wektory</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-p2">
+            <div class="flow-node-icon">🗄️</div>
+            <div class="flow-node-title">Baza wektorowa</div>
+            <div class="flow-node-sub">indeks wektorów</div>
+          </div>
+          <div class="flow-arrow">+</div>
+          <div class="flow-node fn-p2">
+            <div class="flow-node-icon">📋</div>
+            <div class="flow-node-title">Metadane</div>
+            <div class="flow-node-sub">źródło, chunk, tekst</div>
+          </div>
+        </div>
+
+        <hr class="flow-divider" />
+
+        <!-- QUERY -->
+        <div class="flow-phase-label">Zapytanie (w czasie rzeczywistym)</div>
+
+        <div class="flow-row">
+          <div class="flow-node fn-user">
+            <div class="flow-node-icon">👤</div>
+            <div class="flow-node-title">Pytanie</div>
+            <div class="flow-node-sub">"Filmy Nolana?"</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-p3">
+            <div class="flow-node-icon">🖥️</div>
+            <div class="flow-node-title">Interfejs webowy</div>
+            <div class="flow-node-sub">aplikacja</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-p2">
+            <div class="flow-node-icon">🧮</div>
+            <div class="flow-node-title">Embed pytania</div>
+            <div class="flow-node-sub">pytanie → wektor</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-p2">
+            <div class="flow-node-icon">🔍</div>
+            <div class="flow-node-title">Wyszukiwanie</div>
+            <div class="flow-node-sub">najlepsze fragmenty</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-p2">
+            <div class="flow-node-icon">💬</div>
+            <div class="flow-node-title">Odpowiedź</div>
+            <div class="flow-node-sub">tekst + źródła</div>
+          </div>
+        </div>
+
+        <div class="flow-arrow-down">↓</div>
+
+        <div class="flow-row">
+          <div class="flow-node fn-p3" style="max-width: 400px; flex: none">
+            <div class="flow-node-icon">✅</div>
+            <div class="flow-node-title">Wynik na ekranie</div>
+            <div class="flow-node-sub">
+              Odpowiedź + fragmenty dokumentacji + źródła (plik, chunk) lub "Nie
+              znaleziono informacji"
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-user">
+            <div class="flow-node-icon">👤</div>
+            <div class="flow-node-title">Użytkownik</div>
+            <div class="flow-node-sub">czyta odpowiedź</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 3. DELIVERABLES ============ -->
+      <div class="section-title">
+        <div
+          class="section-num"
+          style="background: linear-gradient(135deg, #6366f1, #818cf8)"
+        >
+          3
+        </div>
+        <div class="section-text">Deliverables — kto co dostarcza</div>
+      </div>
+
+      <div class="del-grid">
+        <!-- Osoba 1 deliverables -->
+        <div class="del-card d1">
+          <div class="del-person p1-accent">Osoba 1 — Dane</div>
+
+          <div class="del-item">
+            <span class="del-file">data/raw/</span>
+            <span class="del-desc">Folder z dokumentami filmowymi</span>
+          </div>
+          <div class="del-item">
+            <span class="del-file">moduł ładowania</span>
+            <span class="del-desc">Wczytywanie plików z folderu</span>
+          </div>
+          <div class="del-item">
+            <span class="del-file">moduł czyszczenia</span>
+            <span class="del-desc">Preprocessing tekstu</span>
+          </div>
+          <div class="del-item">
+            <span class="del-file">moduł chunkingu</span>
+            <span class="del-desc">Podział dokumentów na fragmenty</span>
+          </div>
+          <div class="del-item">
+            <span class="del-file">pipeline</span>
+            <span class="del-desc"
+              >Skrypt uruchamiający cały proces indeksowania</span
+            >
+          </div>
+          <div class="del-item">
+            <span class="del-file">notebook EDA</span>
+            <span class="del-desc"
+              >Eksploracja i analiza danych źródłowych</span
+            >
+          </div>
+        </div>
+
+        <!-- Osoba 2 deliverables -->
+        <div class="del-card d2">
+          <div class="del-person p2-accent">Osoba 2 — Silnik RAG</div>
+
+          <div class="del-item">
+            <span class="del-file">moduł embeddingów</span>
+            <span class="del-desc">Zamiana tekstu na wektory</span>
+          </div>
+          <div class="del-item">
+            <span class="del-file">moduł bazy wektorowej</span>
+            <span class="del-desc">Budowa, zapis i odczyt indeksu</span>
+          </div>
+          <div class="del-item">
+            <span class="del-file">moduł retrievalu</span>
+            <span class="del-desc">Wyszukiwanie najlepszych fragmentów</span>
+          </div>
+          <div class="del-item">
+            <span class="del-file">moduł odpowiedzi</span>
+            <span class="del-desc">Składanie odpowiedzi ze źródłami</span>
+          </div>
+          <div class="del-item">
+            <span class="del-file">index/</span>
+            <span class="del-desc">Zapisany indeks + metadane</span>
+          </div>
+        </div>
+
+        <!-- Osoba 3 deliverables -->
+        <div class="del-card d3">
+          <div class="del-person p3-accent">Osoba 3 — App & Testy</div>
+
+          <div class="del-item">
+            <span class="del-file">aplikacja webowa</span>
+            <span class="del-desc"
+              >Interfejs użytkownika (pytanie → odpowiedź)</span
+            >
+          </div>
+          <div class="del-item">
+            <span class="del-file">pytania testowe</span>
+            <span class="del-desc">15–20 pytań w 4 kategoriach + raport</span>
+          </div>
+          <div class="del-item">
+            <span class="del-file">README</span>
+            <span class="del-desc">Instrukcja instalacji i uruchomienia</span>
+          </div>
+          <div class="del-item">
+            <span class="del-file">konfiguracja</span>
+            <span class="del-desc">Lista zależności, zmienne środowiskowe</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Projekt RAG — Asystent Filmowy &middot; System AI do obsługi zamkniętej
+      dokumentacji &middot; 2026
+    </div>
+  </body>
+</html>
