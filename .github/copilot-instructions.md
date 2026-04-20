@@ -1,108 +1,108 @@
-# CineRAG — Instrukcje dla GitHub Copilot
+# CineRAG — Instructions for GitHub Copilot
 
-## Kontekst projektu
+## Project Context
 
-**CineRAG** to studencki system rekomendacji filmów oparty na architekturze RAG
-(Retrieval-Augmented Generation). Dataset: TMDB 5000 (Kaggle).
+**CineRAG** is a student movie recommendation system based on the RAG
+(Retrieval-Augmented Generation) architecture. Dataset: TMDB 5000 (Kaggle).
 
-Projekt jest podzielony na trzy moduły przypisane trzem osobom:
+The project is split into three modules assigned to three people:
 
-| Moduł                | Folder                            | Właściciel |
-| -------------------- | --------------------------------- | ---------- |
-| Dane i przetwarzanie | `cine_rag/data/`                  | Osoba 1    |
-| Silnik RAG           | `cine_rag/rag/`                   | Osoba 2    |
-| Aplikacja i testy    | `cine_rag/ui/`, `cine_rag/tests/` | Osoba 3    |
+| Module            | Folder                            | Owner    |
+| ----------------- | --------------------------------- | -------- |
+| Data & processing | `cine_rag/data/`                  | Person 1 |
+| RAG engine        | `cine_rag/rag/`                   | Person 2 |
+| App & tests       | `cine_rag/ui/`, `cine_rag/tests/` | Person 3 |
 
-Punkt startowy aplikacji: `cine_rag/main.py` (Streamlit).
-
----
-
-## Zasady ogólne
-
-- Język kodu: **Python 3.11+**, z type hints.
-- Formatowanie: **Ruff** (linter + formatter) — PEP 8, max line length 100.
-- Nie dodawaj zbędnych komentarzy ani docstringów do kodu, który nie był zmieniany.
-- Nie twórz nowych abstrakcji/helperów dla jednorazowych operacji.
-- Wszystkie ścieżki do plików buduj przez `pathlib.Path`, nigdy przez string concatenation.
-- Sekrety (klucze API) wyłącznie przez zmienne środowiskowe lub `.env` + `python-dotenv`. Nigdy hardcoded.
+Application entry point: `cine_rag/main.py` (Streamlit).
 
 ---
 
-## Osoba 1 — Moduł danych (`cine_rag/data/`)
+## General Rules
 
-### Zakres plików
+- Code language: **Python 3.11+**, with type hints.
+- Formatting: **Ruff** (linter + formatter) — PEP 8, max line length 100.
+- Do not add unnecessary comments or docstrings to code that was not changed.
+- Do not create new abstractions/helpers for one-off operations.
+- Build all file paths with `pathlib.Path`, never with string concatenation.
+- Secrets (API keys) only via environment variables or `.env` + `python-dotenv`. Never hardcoded.
 
-Pliki Osoby 1:
+---
 
-- `cine_rag/data/` — cały katalog (raw, processed, chunks)
-- Skrypty preprocessing w katalogu głównym `cine_rag/` lub `cine_rag/data/`
+## Person 1 — Data Module (`cine_rag/data/`)
 
-### Konwencje LangChain (aktywne na `cine_rag/data/**/*.py`)
+### File Scope
 
-Gdy generujesz kod do ładowania i podziału dokumentów:
+Person 1's files:
 
-- Używaj `TextLoader` / `DirectoryLoader` z `langchain_community.document_loaders`
-- Do chunkingu stosuj `RecursiveCharacterTextSplitter` z `langchain_text_splitters`
-- Dokumenty reprezentuj jako `langchain_core.documents.Document` (pola: `page_content`, `metadata`)
-- `metadata` musi zawierać: `source` (nazwa pliku), `chunk_id` (int), `title` (tytuł filmu)
-- Preferuj batch encoding przez `model.encode(texts, batch_size=64, show_progress_bar=True)`
+- `cine_rag/data/` — entire directory (raw, processed, chunks)
+- Preprocessing scripts in `cine_rag/` root or `cine_rag/data/`
 
-### Domyślne parametry (z `config/settings.py`)
+### LangChain Conventions (active for `cine_rag/data/**/*.py`)
+
+When generating code for loading and splitting documents:
+
+- Use `TextLoader` / `DirectoryLoader` from `langchain_community.document_loaders`
+- Use `RecursiveCharacterTextSplitter` from `langchain_text_splitters` for chunking
+- Represent documents as `langchain_core.documents.Document` (fields: `page_content`, `metadata`)
+- `metadata` must contain: `source` (filename), `chunk_id` (int), `title` (movie title)
+- Prefer batch encoding via `model.encode(texts, batch_size=64, show_progress_bar=True)`
+
+### Default Parameters (from `config/settings.py`)
 
 ```python
-CHUNK_SIZE = 500        # znaki
-CHUNK_OVERLAP = 50      # znaki (10%)
+CHUNK_SIZE = 500        # characters
+CHUNK_OVERLAP = 50      # characters (10%)
 BATCH_SIZE = 64         # encoding
 ```
 
-### Dostępne agenci dla Osoby 1
+### Available Agents for Person 1
 
-Wywołuj w chat przez `@nazwa-agenta`:
+Invoke in chat via `@agent-name`:
 
-| Agent                             | Kiedy używać                                                  |
-| --------------------------------- | ------------------------------------------------------------- |
-| `@python-notebook-sample-builder` | Tworzenie notebooka EDA dla TMDB CSV                          |
-| `@spark-performance`              | Optymalizacja pandas merge / wolne operacje na danych         |
-| `@context7`                       | Aktualne API: pandas, LangChain, sentence-transformers, FAISS |
+| Agent                             | When to use                                                     |
+| --------------------------------- | --------------------------------------------------------------- |
+| `@python-notebook-sample-builder` | Creating an EDA notebook for TMDB CSV                           |
+| `@spark-performance`              | Optimizing pandas merge / slow data operations                  |
+| `@context7`                       | Up-to-date API: pandas, LangChain, sentence-transformers, FAISS |
 
-### Dostępne skille dla Osoby 1
+### Available Skills for Person 1
 
-Wywołuj przez `/nazwa-skilla` w chat:
+Invoke via `/skill-name` in chat:
 
-| Skill                         | Kiedy używać                                              |
-| ----------------------------- | --------------------------------------------------------- |
-| `/create-implementation-plan` | Zanim zaczniesz kodować nowy moduł danych                 |
-| `/autoresearch`               | Strojenie chunk_size / chunk_overlap (pętla automatyczna) |
-| `/ruff-recursive-fix`         | Czyszczenie kodu przed commitem                           |
-| `/refactor`                   | Wydzielanie etapów pipeline jako osobne funkcje           |
-| `/security-review`            | Audyt przed finalizacją (path traversal, klucze API)      |
+| Skill                         | When to use                                        |
+| ----------------------------- | -------------------------------------------------- |
+| `/create-implementation-plan` | Before coding a new data module                    |
+| `/autoresearch`               | Tuning chunk_size / chunk_overlap (automatic loop) |
+| `/ruff-recursive-fix`         | Cleaning up code before committing                 |
+| `/refactor`                   | Extracting pipeline stages as separate functions   |
+| `/security-review`            | Audit before finalizing (path traversal, API keys) |
 
-### Kolejność pracy (Osoba 1)
+### Work Order (Person 1)
 
 ```
-1. /create-implementation-plan  → zaplanuj moduł
-2. @python-notebook-sample-builder → EDA TMDB w Jupyter
-3. kod z LangChain loader+splitter  (instrukcja langchain-python aktywna automatycznie)
-4. @context7 pandas / langchain     → sprawdzaj aktualne API
-5. /autoresearch                    → strojenie chunk_size / overlap
-6. /ruff-recursive-fix              → porządkowanie kodu
-7. /security-review                 → audyt końcowy
+1. /create-implementation-plan  → plan the module
+2. @python-notebook-sample-builder → EDA TMDB in Jupyter
+3. code with LangChain loader+splitter  (langchain-python instruction active automatically)
+4. @context7 pandas / langchain     → check up-to-date APIs
+5. /autoresearch                    → tune chunk_size / overlap
+6. /ruff-recursive-fix              → clean up code
+7. /security-review                 → final audit
 ```
 
 ---
 
-## Struktura plików Copilot w tym repozytorium
+## Copilot File Structure in This Repository
 
 ```
 .github/
-├── copilot-instructions.md          ← ten plik
-├── agents/                          ← agenci (Osoba 1)
+├── copilot-instructions.md          ← this file
+├── agents/                          ← agents (Person 1)
 │   ├── python-notebook-sample-builder.agent.md
 │   ├── spark-performance.agent.md
 │   └── context7.agent.md
-├── instructions/                    ← instrukcje aktywowane automatycznie
+├── instructions/                    ← automatically activated instructions
 │   └── langchain-python.instructions.md   (glob: cine_rag/data/**/*.py)
-└── prompts/                         ← skille (Osoba 1)
+└── prompts/                         ← skills (Person 1)
     ├── autoresearch/
     ├── create-implementation-plan/
     ├── ruff-recursive-fix/
@@ -112,17 +112,17 @@ Wywołuj przez `/nazwa-skilla` w chat:
 
 ---
 
-## Interfejsy między modułami
+## Module Interfaces
 
-Osoba 1 dostarcza Osobie 2 listę obiektów `Document` (LangChain schema):
+Person 1 provides Person 2 with a list of `Document` objects (LangChain schema):
 
 ```python
-# Kontrakt danych: wyjście Osoby 1 → wejście Osoby 2
+# Data contract: Person 1 output → Person 2 input
 from langchain_core.documents import Document
 
 documents: list[Document] = [
     Document(
-        page_content="Tytuł: Inception\nReżyser: Christopher Nolan\n...",
+        page_content="Title: Inception\nDirector: Christopher Nolan\n...",
         metadata={
             "source": "inception.txt",
             "chunk_id": 0,
@@ -134,4 +134,34 @@ documents: list[Document] = [
 ]
 ```
 
-Osoba 2 przyjmuje tę listę i buduje na niej indeks wektorowy.
+Person 2 accepts this list and builds a vector index on top of it.
+
+---
+
+## Markdown File Writing Rules
+
+Follow these rules in all `.md` files in the project:
+
+- **MD012** — At most one blank line in a row. Never two or more consecutive blank lines.
+- **MD031** — A code block (` ``` `) must be surrounded by blank lines — one blank line before the opening fence and one after the closing fence.
+- **MD060** — Table column separators must have spaces on both sides of the dashes: `| --- |`, not `|---|`.
+
+Example of a correct table:
+
+```markdown
+| Column A | Column B |
+| -------- | -------- |
+| value 1  | value 2  |
+```
+
+Example of a correct code block:
+
+```markdown
+Text before the block.
+
+\`\`\`python
+print("hello")
+\`\`\`
+
+Text after the block.
+```
