@@ -6,6 +6,13 @@ EMBEDDING_MODEL_NAME: str = "all-MiniLM-L6-v2"
 # Retrieval
 TOP_K_DEFAULT: int = 5
 
+# Chunking
+CHUNK_SIZE: int = 500
+CHUNK_OVERLAP: int = 50
+
+# Encoding
+BATCH_SIZE: int = 64
+
 # Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
