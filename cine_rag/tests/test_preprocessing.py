@@ -11,6 +11,7 @@ from data.preprocessing import (
     extract_director,
     extract_genres,
     merge_datasets,
+    save_documents_as_txt,
 )
 
 
@@ -159,3 +160,48 @@ class TestBuildCleanDataframe:
         df = build_clean_dataframe(tmp_path)
 
         assert df["overview"].isnull().sum() == 0
+
+
+class TestSaveDocumentsAsTxt:
+    def _make_df(self) -> pd.DataFrame:
+        return pd.DataFrame({
+            "title": ["Inception", "The Dark Knight"],
+            "release_year": [2010, 2008],
+            "genres": [["Sci-Fi", "Action"], ["Action", "Crime"]],
+            "director": ["Christopher Nolan", "Christopher Nolan"],
+            "cast": [["DiCaprio", "Hardy"], ["Bale", "Ledger"]],
+            "vote_average": [8.8, 9.0],
+            "overview": ["A dream heist movie.", "A superhero crime thriller."],
+        })
+
+    def test_creates_one_file_per_row(self, tmp_path: Path):
+        df = self._make_df()
+        save_documents_as_txt(df, tmp_path)
+        txt_files = list(tmp_path.glob("*.txt"))
+        assert len(txt_files) == 2
+
+    def test_filename_is_slugified(self, tmp_path: Path):
+        df = self._make_df()
+        save_documents_as_txt(df, tmp_path)
+        names = {f.name for f in tmp_path.glob("*.txt")}
+        assert "inception_2010.txt" in names
+        assert "the_dark_knight_2008.txt" in names
+
+    def test_file_contains_required_fields(self, tmp_path: Path):
+        df = self._make_df()
+        save_documents_as_txt(df, tmp_path)
+        content = (tmp_path / "inception_2010.txt").read_text(encoding="utf-8")
+        assert "Tytuł: Inception" in content
+        assert "Rok: 2010" in content
+        assert "Gatunki: Sci-Fi, Action" in content
+        assert "Reżyser: Christopher Nolan" in content
+        assert "Obsada: DiCaprio, Hardy" in content
+        assert "8.8/10" in content
+        assert "A dream heist movie." in content
+
+    def test_creates_directory_if_not_exists(self, tmp_path: Path):
+        target = tmp_path / "new_subdir"
+        df = self._make_df()
+        save_documents_as_txt(df, target)
+        assert target.is_dir()
+        assert len(list(target.glob("*.txt"))) == 2

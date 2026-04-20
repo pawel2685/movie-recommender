@@ -102,7 +102,6 @@ def build_clean_dataframe(raw_dir: Path) -> pd.DataFrame:
 
 Format pliku (szablon):
 
-```
 Tytuł: {title}
 Rok: {release_year}
 Gatunki: {genres_joined}
@@ -112,7 +111,6 @@ Ocena: {vote_average}/10
 
 Opis:
 {overview}
-```
 
 Funkcja:
 
