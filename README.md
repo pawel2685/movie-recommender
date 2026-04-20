@@ -103,9 +103,31 @@ streamlit run cine_rag/main.py
 
 ### 5. Uruchom testy
 
+Konfiguracja pytest znajduje się w `pytest.ini` w katalogu głównym projektu.
+Ustawia `pythonpath = cine_rag`, dzięki czemu wszystkie testy działają poprawnie bez ręcznej modyfikacji `sys.path`.
+
+Uruchomienie wszystkich testów:
+
 ```bash
-pytest cine_rag/tests/
+pytest
 ```
+
+Uruchomienie testów konkretnego modułu:
+
+```bash
+pytest cine_rag/tests/test_preprocessing.py -v
+pytest cine_rag/tests/test_rag.py -v
+pytest cine_rag/tests/test_ui_logic.py -v
+```
+
+Dostępne pliki testów:
+
+| Plik | Zakres |
+| --- | --- |
+| `tests/test_preprocessing.py` | Moduł danych — parsowanie, czyszczenie, merge, DataFrame |
+| `tests/test_rag.py` | Silnik RAG — `rag_query()`, retrieval, top-k |
+| `tests/test_ui_logic.py` | Logika UI — walidacja wejść, stan sesji |
+| `tests/sample_questions.py` | Zestaw pytań testowych (nie test automatyczny) |
 
 ---
 

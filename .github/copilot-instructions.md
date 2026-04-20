@@ -1,3 +1,4 @@
+````markdown
 # CineRAG — Instructions for GitHub Copilot
 
 ## Project Context
@@ -17,6 +18,10 @@ Application entry point: `cine_rag/main.py` (Streamlit).
 
 ---
 
+<!-- ============================================================
+     BLOCK 1 — PROJECT-WIDE RULES (apply to everyone)
+     ============================================================ -->
+
 ## General Rules
 
 - Code language: **Python 3.11+**, with type hints.
@@ -25,8 +30,51 @@ Application entry point: `cine_rag/main.py` (Streamlit).
 - Do not create new abstractions/helpers for one-off operations.
 - Build all file paths with `pathlib.Path`, never with string concatenation.
 - Secrets (API keys) only via environment variables or `.env` + `python-dotenv`. Never hardcoded.
+- All variable names, function names, class names, and identifiers must be in English — no Polish characters (ą, ę, ó, ś, etc.) anywhere in code.
+- Do not add comments inside code. Logic that needs explanation belongs in the separate documentation.
+- Loggers must use plain text messages only — no icons, no decorators, no special formatting characters.
+
+## Documentation Rules
+
+- All project documentation (README files, module docs, analysis write-ups) must be written in **Polish**.
+- Exception: this file (`copilot-instructions.md`) and all files in `.github/` stay in **English**.
+- Documentation language style: academic but accessible — clear sentence structure, no jargon or fancy vocabulary where plain words suffice.
+- Do not duplicate code logic in documentation — explain _why_, not _what_ the code does line by line.
+
+## Markdown File Writing Rules
+
+Follow these rules in all `.md` files in the project:
+
+- **MD012** — At most one blank line in a row. Never two or more consecutive blank lines.
+- **MD031** — A code block (` ``` `) must be surrounded by blank lines — one blank line before the opening fence and one after the closing fence.
+- **MD060** — Table column separators must have spaces on both sides of the dashes: `| --- |`, not `|---|`.
+
+Example of a correct table:
+
+```markdown
+| Column A | Column B |
+| -------- | -------- |
+| value 1  | value 2  |
+```
+````
+
+Example of a correct code block:
+
+```markdown
+Text before the block.
+
+\`\`\`python
+print("hello")
+\`\`\`
+
+Text after the block.
+```
 
 ---
+
+<!-- ============================================================
+     BLOCK 2 — TEAM STRUCTURE & AGENT FLOWS (per-person)
+     ============================================================ -->
 
 ## Person 1 — Data Module (`cine_rag/data/`)
 
@@ -80,14 +128,26 @@ Invoke via `/skill-name` in chat:
 ### Work Order (Person 1)
 
 ```
-1. /create-implementation-plan  → plan the module
-2. @python-notebook-sample-builder → EDA TMDB in Jupyter
-3. code with LangChain loader+splitter  (langchain-python instruction active automatically)
-4. @context7 pandas / langchain     → check up-to-date APIs
-5. /autoresearch                    → tune chunk_size / overlap
-6. /ruff-recursive-fix              → clean up code
-7. /security-review                 → final audit
+1. /create-implementation-plan       → plan the module
+2. @python-notebook-sample-builder   → EDA TMDB in Jupyter
+3. code with LangChain loader+splitter (langchain-python instruction active automatically)
+4. @context7 pandas / langchain      → check up-to-date APIs
+5. /autoresearch                     → tune chunk_size / overlap
+6. /ruff-recursive-fix               → clean up code
+7. /security-review                  → final audit
 ```
+
+---
+
+## Person 2 — RAG Engine (`cine_rag/rag/`)
+
+> Section to be filled in.
+
+---
+
+## Person 3 — App & Tests (`cine_rag/ui/`, `cine_rag/tests/`)
+
+> Section to be filled in.
 
 ---
 
@@ -132,36 +192,5 @@ documents: list[Document] = [
         },
     )
 ]
-```
 
-Person 2 accepts this list and builds a vector index on top of it.
-
----
-
-## Markdown File Writing Rules
-
-Follow these rules in all `.md` files in the project:
-
-- **MD012** — At most one blank line in a row. Never two or more consecutive blank lines.
-- **MD031** — A code block (` ``` `) must be surrounded by blank lines — one blank line before the opening fence and one after the closing fence.
-- **MD060** — Table column separators must have spaces on both sides of the dashes: `| --- |`, not `|---|`.
-
-Example of a correct table:
-
-```markdown
-| Column A | Column B |
-| -------- | -------- |
-| value 1  | value 2  |
-```
-
-Example of a correct code block:
-
-```markdown
-Text before the block.
-
-\`\`\`python
-print("hello")
-\`\`\`
-
-Text after the block.
 ```
