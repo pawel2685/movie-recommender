@@ -40,7 +40,7 @@ BATCH_SIZE: int = 64
 
 ## Krok 1 — EDA w Jupyter Notebook
 
-**Plik:** `eda_tmdb.ipynb` (w katalogu głównym lub `data/`)
+**Plik:** `eda_tmdb.ipynb` (w katalogu `data/pre-processing/`)
 
 **Cel:** zrozumieć strukturę danych przed pisaniem kodu produkcyjnego.
 
