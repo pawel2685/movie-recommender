@@ -14,7 +14,8 @@ def load_raw_data(raw_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
 
 
 def merge_datasets(movies_df: pd.DataFrame, credits_df: pd.DataFrame) -> pd.DataFrame:
-    return movies_df.merge(credits_df, left_on="id", right_on="movie_id", how="inner")
+    credits_clean = credits_df.drop(columns=["title"], errors="ignore")
+    return movies_df.merge(credits_clean, left_on="id", right_on="movie_id", how="inner")
 
 
 def _safe_parse(value: str) -> list:

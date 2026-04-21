@@ -21,7 +21,7 @@ def build_faiss_index(chunks: list[Document]) -> None:
     index.add(np.array(embeddings, dtype="float32"))
 
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
-    faiss.write_index(index, str(VECTOR_STORE_PATH))
+    VECTOR_STORE_PATH.write_bytes(faiss.serialize_index(index).tobytes())
 
     metadata = [c.metadata for c in chunks]
     with open(PROCESSED_DIR / "metadata.json", "w", encoding="utf-8") as f:
