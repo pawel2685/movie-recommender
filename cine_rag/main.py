@@ -1,30 +1,68 @@
+"""
+main.py
+Punkt startowy aplikacji CineRAG.
+
+Uruchomienie:
+    streamlit run main.py
+
+Struktura:
+    main.py                 ← jesteś tutaj
+    ui/styles.py            → CSS
+    ui/layout.py            → hero, sidebar
+    ui/tabs/tab_main.py     → zakładka "Zapytaj"
+    ui/tabs/tab_tests.py    → zakładka "Testy"
+    ui/tabs/tab_about.py    → zakładka "O projekcie"
+    rag/engine.py           → rag_query() (Osoba 2)
+    utils/session.py        → session_state
+    config/settings.py      → parametry
+    config/constants.py     → stałe dane
+"""
 import streamlit as st
 
-from ui.layout import render_header, render_sidebar
-from ui.styles import load_styles
-from ui.tabs.tab_main import render_tab_main
-from ui.tabs.tab_tests import render_tab_tests
-from ui.tabs.tab_about import render_tab_about
-from utils.session import init_session_state
+
+# ── KONFIGURACJA STRONY (MUSI być pierwszym wywołaniem Streamlit) ─────────────
+from config.settings import PAGE_TITLE, PAGE_ICON, LAYOUT
 
 st.set_page_config(
-    page_title="CineRAG",
-    page_icon="🎬",
-    layout="wide",
+    page_title=PAGE_TITLE,
+    page_icon=PAGE_ICON,
+    layout=LAYOUT,
+    initial_sidebar_state="expanded",
 )
 
-load_styles()
-init_session_state()
-render_header()
-render_sidebar()
+# ── INICJALIZACJA SESJI ───────────────────────────────────────────────────────
+from utils.session import init_session
+init_session()
 
-tab_main, tab_tests, tab_about = st.tabs(["Zapytaj", "Testy", "O projekcie"])
+# ── CSS ───────────────────────────────────────────────────────────────────────
+from ui.styles import inject_styles
+inject_styles()
 
-with tab_main:
-    render_tab_main()
+# ── LAYOUT ───────────────────────────────────────────────────────────────────
+from ui.layout import render_hero, render_sidebar
+render_hero()
+top_k, model_name, show_scores = render_sidebar() # Tu renderujemy sidebar
 
-with tab_tests:
-    render_tab_tests()
+# ── ZAKŁADKI ─────────────────────────────────────────────────────────────────
+from ui.tabs import tab_main, tab_tests, tab_about, tab_base, tab_database
 
-with tab_about:
-    render_tab_about()
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["💬  Zapytaj", "🎬  Moja Lista", "🧪  Testy", "📋  O projekcie", "⚙️  Metodologia"])
+
+with tab1:
+    tab_main.render(top_k=top_k, model_name=model_name, show_scores=show_scores)
+
+with tab2:
+    tab_database.render()
+
+with tab3:
+    tab_tests.render()
+
+with tab4:
+    tab_about.render()
+
+with tab5:
+    tab_base.render()
+
+# ── DODATKI UI ───────────────────────────────────────────────────────────────
+from ui.layout import inject_sidebar_toggle
+inject_sidebar_toggle()  

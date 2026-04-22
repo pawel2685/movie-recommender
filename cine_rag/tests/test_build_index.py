@@ -26,14 +26,14 @@ def mock_pipeline(tmp_path):
         patch("data.build_index.save_documents_as_txt") as mock_save,
         patch("data.build_index.load_documents", return_value=dummy_docs) as mock_load,
         patch("data.build_index.split_documents", return_value=dummy_chunks) as mock_split,
-        patch("data.build_index.build_faiss_index") as mock_index,
+        patch("data.build_index.export_chunks_to_json") as mock_export,
     ):
         yield {
             "build_clean_dataframe": mock_build,
             "save_documents_as_txt": mock_save,
             "load_documents": mock_load,
             "split_documents": mock_split,
-            "build_faiss_index": mock_index,
+            "export_chunks_to_json": mock_export,
         }
 
 
@@ -64,9 +64,9 @@ class TestMain:
         assert isinstance(args[0], list)
         assert all(isinstance(d, Document) for d in args[0])
 
-    def test_build_faiss_index_receives_chunks(self, mock_pipeline):
+    def test_export_chunks_to_json_receives_chunks(self, mock_pipeline):
         main()
-        args, _ = mock_pipeline["build_faiss_index"].call_args
+        args, _ = mock_pipeline["export_chunks_to_json"].call_args
         assert isinstance(args[0], list)
         assert all(isinstance(c, Document) for c in args[0])
 
@@ -76,7 +76,7 @@ class TestMain:
         manager.attach_mock(mock_pipeline["save_documents_as_txt"], "save_documents_as_txt")
         manager.attach_mock(mock_pipeline["load_documents"], "load_documents")
         manager.attach_mock(mock_pipeline["split_documents"], "split_documents")
-        manager.attach_mock(mock_pipeline["build_faiss_index"], "build_faiss_index")
+        manager.attach_mock(mock_pipeline["export_chunks_to_json"], "export_chunks_to_json")
 
         main()
 
@@ -84,4 +84,4 @@ class TestMain:
         assert call_names.index("build_clean_dataframe") < call_names.index("save_documents_as_txt")
         assert call_names.index("save_documents_as_txt") < call_names.index("load_documents")
         assert call_names.index("load_documents") < call_names.index("split_documents")
-        assert call_names.index("split_documents") < call_names.index("build_faiss_index")
+        assert call_names.index("split_documents") < call_names.index("export_chunks_to_json")

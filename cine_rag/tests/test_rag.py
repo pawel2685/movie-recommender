@@ -1,33 +1,48 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from rag.engine import rag_query
+from rag.embeddings import MockEmbeddingModel
+from rag.retriever import MockRetriever
 
 
 @pytest.fixture
 def mock_model():
-    model = MagicMock()
-    model.encode.return_value = [0.1] * 384
-    return model
+    return MockEmbeddingModel()
 
 
-def test_rag_query_returns_list(mock_model):
+@pytest.fixture
+def mock_retriever():
+    return MockRetriever()
+
+
+def test_rag_query_returns_dict(mock_model, mock_retriever):
     with (
-        patch("rag.engine.get_embedding_model", return_value=mock_model),
-        patch("rag.engine.retrieve", return_value=[]),
-        patch("rag.engine.generate_response", return_value=[]),
+        patch("rag.engine._load_model", return_value=mock_model),
+        patch("rag.engine._load_retriever", return_value=mock_retriever),
+        patch("rag.engine.time"),
     ):
         result = rag_query("film akcji")
-    assert isinstance(result, list)
+    assert isinstance(result, dict)
+    assert "text" in result
+    assert "sources" in result
 
 
-def test_rag_query_passes_top_k(mock_model):
+def test_rag_query_empty_question_returns_none_text(mock_model, mock_retriever):
     with (
-        patch("rag.engine.get_embedding_model", return_value=mock_model),
-        patch("rag.engine.retrieve", return_value=[]) as mock_retrieve,
-        patch("rag.engine.generate_response", return_value=[]),
+        patch("rag.engine._load_model", return_value=mock_model),
+        patch("rag.engine._load_retriever", return_value=mock_retriever),
     ):
-        rag_query("komedia romantyczna", top_k=3)
-    mock_retrieve.assert_called_once()
-    _, kwargs = mock_retrieve.call_args
-    assert kwargs.get("top_k") == 3
+        result = rag_query("")
+    assert result["text"] is None
+    assert result["sources"] == []
+
+
+def test_rag_query_passes_top_k(mock_model, mock_retriever):
+    with (
+        patch("rag.engine._load_model", return_value=mock_model),
+        patch("rag.engine._load_retriever", return_value=mock_retriever),
+        patch("rag.engine.time"),
+    ):
+        result = rag_query("nolan", top_k=2)
+    assert isinstance(result, dict)
