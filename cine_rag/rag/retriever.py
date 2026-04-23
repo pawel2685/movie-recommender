@@ -1,44 +1,90 @@
+"""
+rag/retriever.py
+Wyszukiwanie semantyczne w bazie wektorowej.
+Osoba 2 implementuje tę klasę — podłącz FAISS lub ChromaDB.
+
+Instalacja:
+    pip install faiss-cpu   # lub faiss-gpu
+    pip install chromadb    # alternatywa
+"""
+
+from __future__ import annotations
 import numpy as np
-
-from config.settings import VECTOR_STORE_PATH, TOP_K_DEFAULT
-
-# Lazy-loaded index – populated by build_index() or loaded from disk
-_index = None
-_metadata: list[dict] = []
+from dataclasses import dataclass
 
 
-def build_index(embeddings: np.ndarray, metadata: list[dict]) -> None:
-    """Build a FAISS index from pre-computed embeddings."""
-    import faiss
-
-    global _index, _metadata
-    dim = embeddings.shape[1]
-    _index = faiss.IndexFlatL2(dim)
-    _index.add(embeddings.astype(np.float32))
-    _metadata = metadata
+# ── STRUKTURA WYNIKU ──────────────────────────────────────────────────────────
+@dataclass
+class RetrievedChunk:
+    file:  str    # nazwa pliku źródłowego, np. "inception_2010.txt"
+    chunk: int    # numer fragmentu w pliku
+    score: float  # cosine similarity (0–1)
+    text:  str    # surowy tekst fragmentu
 
 
-def load_index() -> None:
-    """Load a persisted FAISS index from disk."""
-    import faiss
+# ── INTERFEJS RETRIEVERA ──────────────────────────────────────────────────────
+class Retriever:
+    """
+    Baza klasy — zaimplementuj search() dla FAISS lub ChromaDB.
+    """
 
-    global _index
-    _index = faiss.read_index(str(VECTOR_STORE_PATH))
+    def search(self, query_vector: np.ndarray, top_k: int) -> list[RetrievedChunk]:
+        raise NotImplementedError
 
 
-def retrieve(query_embedding: np.ndarray, top_k: int = TOP_K_DEFAULT) -> list[dict]:
-    """Return the top_k most similar chunks for the given query embedding."""
-    if _index is None:
+# ── MOCK RETRIEVER ────────────────────────────────────────────────────────────
+class MockRetriever(Retriever):
+    """
+    Zastępczy retriever — zwraca predefiniowane wyniki dla wybranych słów kluczowych.
+    Używany podczas developmentu UI zanim Osoba 2 dostarczy prawdziwy indeks.
+    """
+
+    _MOCK_DB: dict[str, list[RetrievedChunk]] = {
+        "nolan": [
+            RetrievedChunk("interstellar_2014.txt", 3, 0.94,
+                "Interstellar (2014) reż. Christopher Nolan. Gatunek: Sci-Fi, Dramat. "
+                "Ocena: 8.6/10. Obsada: Matthew McConaughey, Anne Hathaway, Jessica Chastain."),
+            RetrievedChunk("inception_2010.txt", 1, 0.91,
+                "Inception (2010) reż. Christopher Nolan. Gatunek: Thriller, Sci-Fi. "
+                "Dom Cobb to złodziej kradnący sekrety z podświadomości śpiących ludzi."),
+            RetrievedChunk("dark_knight_2008.txt", 2, 0.87,
+                "The Dark Knight (2008) reż. Christopher Nolan. "
+                "Batman podejmuje walkę z Jokerem — anarchistycznym przestępcą."),
+        ],
+        "interstellar": [],   # przekierowane do "nolan"
+        "inception":    [],
+    }
+
+    def search(self, query_vector: np.ndarray, top_k: int) -> list[RetrievedChunk]:
+        # MockRetriever ignoruje query_vector — klucz przekazywany jest z engine.py
         return []
 
-    distances, indices = _index.search(
-        query_embedding.reshape(1, -1).astype(np.float32), top_k
-    )
-    results = []
-    for dist, idx in zip(distances[0], indices[0]):
-        if idx == -1:
-            continue
-        entry = dict(_metadata[idx])
-        entry["score"] = float(1 / (1 + dist))
-        results.append(entry)
-    return results
+    def search_by_keyword(self, keyword: str, top_k: int) -> list[RetrievedChunk]:
+        """Wyszukiwanie po słowie kluczowym (tylko dla MockRetriever)."""
+        for key, chunks in self._MOCK_DB.items():
+            if key in keyword.lower():
+                return chunks[:top_k]
+        return []
+
+
+# ── FAISS RETRIEVER (szkielet) ────────────────────────────────────────────────
+# class FAISSRetriever(Retriever):
+#     def __init__(self, index_path: str, metadata: list[dict]):
+#         import faiss
+#         self._index    = faiss.read_index(index_path)
+#         self._metadata = metadata   # lista słowników: {file, chunk, text}
+#
+#     def search(self, query_vector: np.ndarray, top_k: int) -> list[RetrievedChunk]:
+#         scores, indices = self._index.search(
+#             query_vector.reshape(1, -1).astype("float32"), top_k
+#         )
+#         results = []
+#         for score, idx in zip(scores[0], indices[0]):
+#             if idx == -1:
+#                 continue
+#             meta = self._metadata[idx]
+#             results.append(RetrievedChunk(
+#                 file=meta["file"], chunk=meta["chunk"],
+#                 score=float(score), text=meta["text"]
+#             ))
+#         return results

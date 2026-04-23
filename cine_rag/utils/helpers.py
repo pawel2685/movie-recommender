@@ -1,10 +1,21 @@
-def truncate_text(text: str, max_length: int = 200) -> str:
-    """Return text truncated to max_length characters, adding '…' if cut."""
+from __future__ import annotations
+
+
+def fmt_score(score: float) -> str:
+    return f"{score:.3f}"
+
+
+def truncate(text: str, max_length: int = 38) -> str:
     if len(text) <= max_length:
         return text
     return text[:max_length].rstrip() + "…"
 
 
-def format_genres(genres: list[str]) -> str:
-    """Join a list of genre strings into a comma-separated display string."""
-    return ", ".join(genres) if genres else "Brak gatunku"
+def history_icon(found: bool) -> str:
+    return "✓" if found else "✗"
+
+
+def history_color(found: bool, is_active: bool = False) -> str:
+    if is_active:
+        return "#e0a030"
+    return "#336633" if found else "#663333"

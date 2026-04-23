@@ -1,5 +1,2 @@
-from ui.layout import render_header, render_sidebar
-from ui.styles import load_styles
-from ui.components import movie_card, genre_chip
-
-__all__ = ["render_header", "render_sidebar", "load_styles", "movie_card", "genre_chip"]
+from .styles import inject_styles
+from ui.layout import render_hero, render_sidebar, inject_sidebar_toggle
