@@ -207,3 +207,7 @@ marimo/_lsp/
 __marimo__/
 
 processed/
+backup_old/
+chunks.json
+index.faiss
+metadata.pkl
