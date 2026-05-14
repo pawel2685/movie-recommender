@@ -11,7 +11,7 @@ from __future__ import annotations
 import time
 
 from .embeddings import get_embedding_model, EmbeddingModel
-from .retriever  import MockRetriever, Retriever
+from .retriever import MockRetriever, Retriever, QdrantRetriever
 from .generator  import generate_answer, QueryResult
 from config.settings import DEFAULT_MODEL, DEFAULT_TOP_K
 
@@ -45,7 +45,7 @@ def _load_retriever() -> Retriever:
     Ładuje i cachuje retriever.
     Zamień MockRetriever na FAISSRetriever gdy indeks jest gotowy.
     """
-    return MockRetriever()
+    return QdrantRetriever()
     # return FAISSRetriever(
     #     index_path=str(INDEX_DIR / "faiss.index"),
     #     metadata=load_metadata(INDEX_DIR / "metadata.json"),

@@ -19,7 +19,7 @@ DEFAULT_TOP_K: int = 3
 TOP_K_DEFAULT: int = DEFAULT_TOP_K
 MIN_TOP_K: int = 1
 MAX_TOP_K: int = 10
-SIMILARITY_THRESHOLD: float = 0.45
+SIMILARITY_THRESHOLD: float = 0.30
 
 # ── CHUNKING ──────────────────────────────────────────────────────────────────
 CHUNK_SIZE: int = 512
