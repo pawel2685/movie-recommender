@@ -11,7 +11,7 @@ Instalacja:
 from __future__ import annotations
 import numpy as np
 from dataclasses import dataclass
-
+from .qdrant_db import search_qdrant
 
 # ── STRUKTURA WYNIKU ──────────────────────────────────────────────────────────
 @dataclass
@@ -88,3 +88,27 @@ class MockRetriever(Retriever):
 #                 score=float(score), text=meta["text"]
 #             ))
 #         return results
+
+
+class QdrantRetriever(Retriever):
+
+    def search(self, query_vector: np.ndarray, top_k: int) -> list[RetrievedChunk]:
+
+        results = search_qdrant(query_vector, top_k)
+
+        chunks = []
+
+        for r in results:
+
+            payload = r.payload
+
+            chunks.append(
+                RetrievedChunk(
+                    file=payload.get("file", ""),
+                    chunk=payload.get("chunk", 0),
+                    score=float(r.score),
+                    text=payload.get("text", "")
+                )
+            )
+
+        return chunks

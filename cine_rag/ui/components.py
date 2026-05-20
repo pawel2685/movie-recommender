@@ -15,12 +15,15 @@ def render_answer_card(text: str, num_sources: int, model_name: str) -> None:
     st.markdown(f"""
     <div class="answer-card">
         <div class="answer-header">
-            <span class="answer-badge">ODPOWIEDŹ</span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#333344">
-                {num_sources} fragmentów · {model_name}
+            <span class="answer-badge">🤖 ODPOWIEDŹ Z LLM (Ollama)</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#666677">
+                oparty na {num_sources} fragmentach
             </span>
         </div>
         <div class="answer-text">{text}</div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(100,150,200,0.1);font-size:11px;color:#888899">
+            <span style="opacity:0.7">💡 Odpowiedź wygenerowana przez model Mistral z Ollama na podstawie fragmentów z bazy filmów</span>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 

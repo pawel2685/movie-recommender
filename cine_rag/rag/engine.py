@@ -9,9 +9,10 @@ Przepływ:
 
 from __future__ import annotations
 import time
+import hashlib
 
 from .embeddings import get_embedding_model, EmbeddingModel
-from .retriever  import MockRetriever, Retriever
+from .retriever import MockRetriever, Retriever, QdrantRetriever
 from .generator  import generate_answer, QueryResult
 from config.settings import DEFAULT_MODEL, DEFAULT_TOP_K
 
@@ -45,7 +46,7 @@ def _load_retriever() -> Retriever:
     Ładuje i cachuje retriever.
     Zamień MockRetriever na FAISSRetriever gdy indeks jest gotowy.
     """
-    return MockRetriever()
+    return QdrantRetriever()
     # return FAISSRetriever(
     #     index_path=str(INDEX_DIR / "faiss.index"),
     #     metadata=load_metadata(INDEX_DIR / "metadata.json"),
@@ -83,12 +84,24 @@ def rag_query(
     # 2. Wyszukaj najbliższe fragmenty
     #    MockRetriever używa keyword fallback — prawdziwy retriever używa wektora
     if isinstance(retriever, MockRetriever):
-        chunks = retriever.search_by_keyword(question, top_k)
+        raw_chunks = retriever.search_by_keyword(question, top_k * 2)
     else:
-        chunks = retriever.search(query_vector, top_k)
+        raw_chunks = retriever.search(query_vector, top_k * 2)
 
-    # 3. Złóż odpowiedź
-    result: QueryResult = generate_answer(question, chunks)
+    # 3. Deduplikacja wyników po treści (aby uniknąć powtórek tego samego filmu/fragmentu)
+    unique_chunks = []
+    seen_contents = set()
+    
+    for c in raw_chunks:
+        content_hash = hashlib.md5(c.text.strip().encode('utf-8')).hexdigest()
+        if content_hash not in seen_contents:
+            unique_chunks.append(c)
+            seen_contents.add(content_hash)
+        if len(unique_chunks) >= top_k:
+            break
+
+    # 4. Złóż odpowiedź
+    result: QueryResult = generate_answer(question, unique_chunks)
 
     # Symulacja opóźnienia sieciowego w trybie mock
     if isinstance(retriever, MockRetriever):

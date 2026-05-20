@@ -46,7 +46,7 @@ top_k, model_name, show_scores = render_sidebar() # Tu renderujemy sidebar
 # ── ZAKŁADKI ─────────────────────────────────────────────────────────────────
 from ui.tabs import tab_main, tab_tests, tab_about, tab_base, tab_database
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["💬  Zapytaj", "🎬  Moja Lista", "🧪  Testy", "📋  O projekcie", "⚙️  Metodologia"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["💬  Zapytaj", "🎬  Moja Lista", "🕘  Historia", "📋  O projekcie", "⚙️  Metodologia"])
 
 with tab1:
     tab_main.render(top_k=top_k, model_name=model_name, show_scores=show_scores)
