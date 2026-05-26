@@ -61,7 +61,34 @@ for chunk in cleaned:
 duplicates_removed = len(cleaned) - len(deduplicated)
 print(f"\n🔄 Usunięto identyczne duplikaty treści: {duplicates_removed}")
 
-# 3. Finalne statystyki
+# 3. Metadata Injection: wzbogacanie treści o kontekst filmu
+injected_count = 0
+for chunk in deduplicated:
+    meta = chunk.get("metadata", {})
+    title = meta.get("title", "Unknown Movie")
+    year = meta.get("release_year", meta.get("year", ""))
+    genres = meta.get("genres", "")
+    
+    if isinstance(genres, list):
+        genres = ", ".join(genres)
+
+    # Budujemy prefiks z metadanymi
+    prefix = f"[Kontekst: Film '{title}'"
+    if year: prefix += f" ({year})"
+    if genres: prefix += f", Gatunki: {genres}"
+    prefix += "] "
+
+    # Wstrzykujemy do właściwego klucza
+    if "page_content" in chunk:
+        chunk["page_content"] = prefix + chunk["page_content"]
+        injected_count += 1
+    elif "text" in chunk:
+        chunk["text"] = prefix + chunk["text"]
+        injected_count += 1
+
+print(f"\n💉 Wykonano Metadata Injection dla {injected_count} fragmentów.")
+
+# 4. Finalne statystyki
 unique_films = len(set(
     chunk.get("metadata", {}).get("title", "Unknown")
     for chunk in deduplicated
@@ -73,7 +100,7 @@ print(f"   Chunki po: {len(deduplicated)}")
 print(f"   Usunięto: {len(chunks) - len(deduplicated)}")
 print(f"   Unikalne filmy: {unique_films}")
 
-# 4. Zapis
+# 5. Zapis
 with open(chunks_path, "w", encoding="utf-8") as f:
     json.dump(deduplicated, f, ensure_ascii=False, indent=2)
 

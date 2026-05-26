@@ -7,39 +7,57 @@ Każda funkcja zwraca string HTML lub renderuje przez st.markdown().
 from __future__ import annotations
 import streamlit as st
 from utils.helpers import fmt_score, truncate, history_icon, history_color
+import html
 
 
 # ── ANSWER CARD ───────────────────────────────────────────────────────────────
 
-def render_answer_card(text: str, num_sources: int, model_name: str) -> None:
-    st.markdown(f"""
+def get_answer_card_html(text: str, num_sources: int, is_streaming: bool = False) -> str:
+    """Generuje kod HTML dla karty odpowiedzi, wspierając tryb streamingu."""
+    lang = st.session_state.get("app_language", "Polski")
+    # Zabezpieczenie przed wstrzykiwaniem HTML przez model
+    safe_text = html.escape(text).replace("\n", "<br>")
+
+    sub = f"oparty na {num_sources} fragmentach" if lang == "Polski" else f"based on {num_sources} chunks"
+
+    cursor = "▌" if is_streaming else ""
+
+    return f"""
     <div class="answer-card">
         <div class="answer-header">
-            <span class="answer-badge">🤖 ODPOWIEDŹ Z LLM (Ollama)</span>
             <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#666677">
-                oparty na {num_sources} fragmentach
+                {sub}
             </span>
         </div>
-        <div class="answer-text">{text}</div>
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(100,150,200,0.1);font-size:11px;color:#888899">
-            <span style="opacity:0.7">💡 Odpowiedź wygenerowana przez model Mistral z Ollama na podstawie fragmentów z bazy filmów</span>
-        </div>
+        <div class="answer-text">{safe_text}{cursor}</div>
     </div>
-    """, unsafe_allow_html=True)
+    """
+
+def render_answer_card(text: str, num_sources: int, model_name: str) -> None:
+    st.markdown(get_answer_card_html(text, num_sources), unsafe_allow_html=True)
 
 
 def render_no_results() -> None:
-    st.markdown("""
+    lang = st.session_state.get("app_language", "Polski")
+    title = "Nie znaleziono informacji w dokumentacji" if lang == "Polski" else "No information found in documentation"
+    text = """
+        Baza zawiera wyłącznie informacje o filmach z datasetu TMDB 5000.
+        Pytania o aktorów, reżyserów poza bazą, serwisy streamingowe
+        lub inne tematy nie będą miały odpowiedzi.
+    """ if lang == "Polski" else """
+        The database only contains information about movies from the TMDB 5000 dataset.
+        Questions about actors, directors outside the database, streaming services
+        or other topics will not have an answer.
+    """
+    st.markdown(f"""
     <div class="no-results">
         <div class="no-results-icon">🔎</div>
         <div>
             <div style="font-size:13px;color:#8a4040;font-weight:600;margin-bottom:4px">
-                Nie znaleziono informacji w dokumentacji
+                {title}
             </div>
             <div class="no-results-text">
-                Baza zawiera wyłącznie informacje o filmach z datasetu TMDB 5000.
-                Pytania o aktorów, reżyserów poza bazą, serwisy streamingowe
-                lub inne tematy nie będą miały odpowiedzi.
+                {text}
             </div>
         </div>
     </div>
@@ -50,6 +68,9 @@ def render_no_results() -> None:
 
 def render_source_chips(sources: list[dict], show_scores: bool) -> None:
     """Renderuje rząd chipów z nazwami plików źródłowych."""
+    lang = st.session_state.get("app_language", "Polski")
+    label = "Źródła" if lang == "Polski" else "Sources"
+
     chips = ""
     for i, src in enumerate(sources):
         score_str = f" · {fmt_score(src['score'])}" if show_scores else ""
@@ -59,7 +80,7 @@ def render_source_chips(sources: list[dict], show_scores: bool) -> None:
             <span class="source-name">{src['file']}{score_str}</span>
         </span>"""
     st.markdown(
-        f'<div class="sources-header">Źródła</div>'
+        f'<div class="sources-header">{label}</div>'
         f'<div style="margin-bottom:0.8rem">{chips}</div>',
         unsafe_allow_html=True,
     )

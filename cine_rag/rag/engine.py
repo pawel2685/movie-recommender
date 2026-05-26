@@ -47,11 +47,37 @@ def _load_retriever() -> Retriever:
     Zamień MockRetriever na FAISSRetriever gdy indeks jest gotowy.
     """
     return QdrantRetriever()
-    # return FAISSRetriever(
-    #     index_path=str(INDEX_DIR / "faiss.index"),
-    #     metadata=load_metadata(INDEX_DIR / "metadata.json"),
-    # )
+    # return FAISSRetriever(...)
 
+def rag_retrieve_chunks(
+    question: str,
+    top_k: int    = DEFAULT_TOP_K,
+    model_name: str = DEFAULT_MODEL,
+):
+    """Wykonuje tylko etap wyszukiwania fragmentów z bazy."""
+    if not question.strip():
+        return []
+
+    model     = _load_model(model_name)
+    retriever = _load_retriever()
+
+    query_vector = model.encode([question])[0]
+
+    if isinstance(retriever, MockRetriever):
+        raw_chunks = retriever.search_by_keyword(question, top_k * 2)
+    else:
+        raw_chunks = retriever.search(query_vector, top_k * 2)
+
+    unique_chunks = []
+    seen_contents = set()
+    for c in raw_chunks:
+        content_hash = hashlib.md5(c.text.strip().encode('utf-8')).hexdigest()
+        if content_hash not in seen_contents:
+            unique_chunks.append(c)
+            seen_contents.add(content_hash)
+        if len(unique_chunks) >= top_k:
+            break
+    return unique_chunks
 
 # ── PUBLICZNY API ─────────────────────────────────────────────────────────────
 
@@ -72,39 +98,6 @@ def rag_query(
         dict z kluczami "text" i "sources" (format oczekiwany przez UI).
         text == None → komunikat "Nie znaleziono informacji".
     """
-    if not question.strip():
-        return {"text": None, "sources": []}
-
-    model     = _load_model(model_name)
-    retriever = _load_retriever()
-
-    # 1. Zamień pytanie na wektor
-    query_vector = model.encode([question])[0]
-
-    # 2. Wyszukaj najbliższe fragmenty
-    #    MockRetriever używa keyword fallback — prawdziwy retriever używa wektora
-    if isinstance(retriever, MockRetriever):
-        raw_chunks = retriever.search_by_keyword(question, top_k * 2)
-    else:
-        raw_chunks = retriever.search(query_vector, top_k * 2)
-
-    # 3. Deduplikacja wyników po treści (aby uniknąć powtórek tego samego filmu/fragmentu)
-    unique_chunks = []
-    seen_contents = set()
-    
-    for c in raw_chunks:
-        content_hash = hashlib.md5(c.text.strip().encode('utf-8')).hexdigest()
-        if content_hash not in seen_contents:
-            unique_chunks.append(c)
-            seen_contents.add(content_hash)
-        if len(unique_chunks) >= top_k:
-            break
-
-    # 4. Złóż odpowiedź
+    unique_chunks = rag_retrieve_chunks(question, top_k, model_name)
     result: QueryResult = generate_answer(question, unique_chunks)
-
-    # Symulacja opóźnienia sieciowego w trybie mock
-    if isinstance(retriever, MockRetriever):
-        time.sleep(0.8)
-
     return result.to_dict()
