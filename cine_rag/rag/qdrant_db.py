@@ -3,10 +3,12 @@ from qdrant_client.models import VectorParams, Distance, PointStruct
 import uuid
 
 COLLECTION_NAME = "movies"
+BATCH_SIZE = 500  # Upload in chunks to avoid timeout
 
 client = QdrantClient(
     host="localhost",
-    port=6333
+    port=6333,
+    timeout=120.0  # Increase timeout to 120 seconds
 )
 
 
@@ -54,10 +56,14 @@ def upload_embeddings(data, embeddings):
             )
         )
 
-    client.upsert(
-        collection_name=COLLECTION_NAME,
-        points=points
-    )
+    # Upload in batches to avoid timeout
+    for i in range(0, len(points), BATCH_SIZE):
+        batch = points[i:i + BATCH_SIZE]
+        client.upsert(
+            collection_name=COLLECTION_NAME,
+            points=batch
+        )
+        print(f"Uploaded batch {i // BATCH_SIZE + 1}/{(len(points) + BATCH_SIZE - 1) // BATCH_SIZE}")
 
     print("Embeddings uploaded")
 

@@ -5,6 +5,8 @@ Osoba 2 implementuje generate() — opcjonalnie z wywołaniem LLM API.
 """
 
 from __future__ import annotations
+import requests
+import os
 from .retriever import RetrievedChunk
 from config.settings import SIMILARITY_THRESHOLD
 
@@ -61,12 +63,54 @@ def generate_answer(question: str, chunks: list[RetrievedChunk]) -> QueryResult:
         return QueryResult(text=None, sources=[])
 
     # ── Wariant A: prosta konkatenacja ────────────────────────────────────────
-    answer = _assemble_from_chunks(question, valid)
+    # answer = _assemble_from_chunks(question, valid)
 
-    # ── Wariant B: LLM API (odkomentuj gdy dostępne) ─────────────────────────
-    # answer = _call_llm(question, valid)
+    # ── Wariant B: Ollama LLM ────────────────────────────────────────────────
+    answer = _call_ollama(question, valid)
 
     return QueryResult(text=answer, sources=valid)
+
+def _call_ollama(question: str, chunks: list[RetrievedChunk]) -> str:
+    """Wysyła zapytanie do lokalnej Ollamy."""
+    url = os.getenv("OLLAMA_API_URL", "http://localhost:11434")
+    model = os.getenv("OLLAMA_MODEL", "neural-chat")
+    
+    context = "\n\n".join([f"Film: {c.file}\nTreść: {c.text}" for c in chunks])
+    
+    prompt = f"""Jesteś doświadczonym asystentem filmowym. Odpowiadaj KONKRETNIE i NATURALNIE.
+
+INSTRUKCJE:
+1. Odpowiadaj TYLKO na podstawie poniższego kontekstu
+2. Bądź konkretny: podaj nazwy filmów, lata, reżyserów, aktorów
+3. Jeśli pytanie o ranking - wylicz filmy z uzasadnieniem
+4. Odpowiadaj zwięźle ale informacyjnie
+5. NIE zmyślaj - jeśli brak info w kontekście, powiedz to jasno
+
+BAZA FILMÓW:
+{context}
+
+PYTANIE: {question}
+
+ODPOWIEDŹ (po polsku, konkretna, bez sztucznych wstępów):"""
+
+    try:
+        res = requests.post(
+            f"{url}/api/generate",
+            json={
+                "model": model, 
+                "prompt": prompt, 
+                "stream": False, 
+                "temperature": 0.15,
+                "top_p": 0.8,
+                "top_k": 25
+            },
+            timeout=90
+        )
+        if res.status_code == 200:
+            return res.json().get("response", "").strip()
+        return "Błąd komunikacji z modelem LLM."
+    except Exception as e:
+        return f"Błąd: {str(e)}"
 
 
 def _assemble_from_chunks(question: str, chunks: list[RetrievedChunk]) -> str:

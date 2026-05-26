@@ -13,7 +13,7 @@ movies = movies.fillna("")
 
 documents = []
 
-for idx, row in movies.head(500).iterrows():
+for idx, row in movies.head(4800).iterrows():
 
     text = f"""
     Title: {row['title']}
