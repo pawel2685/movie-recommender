@@ -13,6 +13,54 @@ from data.preprocessing import build_clean_dataframe
 
 COLLECTION_PATH = PROCESSED_DIR / "my_collection.json"
 
+T = {
+    "Polski": {
+        "personalization": "Personalizacja",
+        "title": "Twoja Baza & Rekomendacje",
+        "desc": "Zarządzaj swoją listą ulubionych tytułów i otrzymaj sugestie dopasowane do Twojego gustu na podstawie analizy wektorowej dokumentacji TMDB 5000.",
+        "my_coll": "Twoja Kolekcja",
+        "search_label": "Wyszukaj film w bazie TMDB...",
+        "search_ph": "🔍 Zacznij wpisywać tytuł filmu...",
+        "add_btn": "➕ Dodaj",
+        "view": "Widok",
+        "sort": "Sortuj",
+        "empty": "Twoja lista jest pusta. Dodaj pierwszy film powyżej!",
+        "score_label": "Ocena",
+        "no_score": "Brak oceny",
+        "ai_recs_label": "AI Sugestie",
+        "recs_desc": "Na podstawie Twojego gustu polecamy:",
+        "add_rec_toast": "Dodano '{}' do Twojej listy!",
+        "already_toast": "Film '{}' jest już na Twojej liście!",
+        "rag_info": "💡 Silnik RAG analizuje opisy Twoich filmów i szuka w bazie TMDB dokumentów o najbardziej zbliżonych wektorach cech.",
+        "sort_opt": ["Domyślnie", "Alfabetycznie", "Ocena (malejąco)", "Rok (malejąco)"],
+        "view_opt": ["Lista", "Kafelki", "Oś czasu"],
+        "rating_prefix": "Ocena: "
+    },
+    "English": {
+        "personalization": "Personalization",
+        "title": "Your Collection & Recommendations",
+        "desc": "Manage your list of favorite titles and get suggestions tailored to your taste based on vector analysis of TMDB 5000 documentation.",
+        "my_coll": "Your Collection",
+        "search_label": "Search for a movie in TMDB...",
+        "search_ph": "🔍 Start typing a movie title...",
+        "add_btn": "➕ Add",
+        "view": "View",
+        "sort": "Sort",
+        "empty": "Your list is empty. Add your first movie above!",
+        "score_label": "Rating",
+        "no_score": "No rating",
+        "ai_recs_label": "AI Suggestions",
+        "recs_desc": "Based on your taste, we recommend:",
+        "add_rec_toast": "Added '{}' to your list!",
+        "already_toast": "Movie '{}' is already on your list!",
+        "rag_info": "💡 The RAG engine analyzes the descriptions of your movies and searches the TMDB database for documents with the most similar feature vectors.",
+        "sort_opt": ["Default", "Alphabetical", "Rating (descending)", "Year (descending)"],
+        "view_opt": ["List", "Tiles", "Timeline"],
+        "rating_prefix": "Rating: "
+    }
+}
+
+
 @st.cache_data
 def get_all_movies():
     """Wczytuje i cachuje pełną bazę filmów do wyszukiwarki."""
@@ -134,15 +182,16 @@ def _inject_vote_button_styles(collection: list[dict]) -> None:
         var DOWN_EMOJI = '{down_emoji}';
 
         /* ── Kolory ─────────────────────────────────────────────────────────
-           DEFAULT     — ciemne tło zamiast pomarańczowego motywu Streamlita
+           DEFAULT     — ciemne tło (#1c2030) zamiast pomarańczowego
            UP_ACTIVE   — zielone po kliknięciu 👍
            DOWN_ACTIVE — czerwone po kliknięciu 👎                           */
-        var DEFAULT     = {{ bg: '#1c2030', color: '#c8c8c8', shadow: 'inset 0 0 0 1px #3a3f55' }};
+        var DEFAULT     = {{ bg: '#0a0b0e', color: '#c8c8c8', shadow: 'inset 0 0 0 1px #3a3f55' }};
         var UP_ACTIVE   = {{ bg: '#1a3d1a', color: '#7dff7d', shadow: 'inset 0 0 0 3px #3a8a3a' }};
         var DOWN_ACTIVE = {{ bg: '#4a1a1a', color: '#ff7d7d', shadow: 'inset 0 0 0 3px #c83a3a' }};
 
         function applyStyle(btn, style) {{
             btn.style.setProperty('background-color', style.bg,     'important');
+            btn.style.setProperty('background-image', 'none',      'important');
             btn.style.setProperty('color',            style.color,  'important');
             btn.style.setProperty('box-shadow',       style.shadow, 'important');
         }}
@@ -155,13 +204,26 @@ def _inject_vote_button_styles(collection: list[dict]) -> None:
                 return t === UP_EMOJI || t === DOWN_EMOJI;
             }});
 
-            /* Kolejność w DOM: up_0, down_0, up_1, down_1, ... */
-            for (var i = 0; i < STATES.length; i++) {{
-                var upBtn   = voteBtns[i * 2];
-                var downBtn = voteBtns[i * 2 + 1];
-                if (!upBtn || !downBtn) continue;
-                applyStyle(upBtn,   STATES[i] === 'up'   ? UP_ACTIVE   : DEFAULT);
-                applyStyle(downBtn, STATES[i] === 'down' ? DOWN_ACTIVE : DEFAULT);
+            /* 
+            Strategia: przyciski są ułożone w pary (up, down) w DOM.
+            Iterujemy po STATES i przypisujemy kolejnym parom.
+            */
+            var pairIdx = 0;
+            for (var i = 0; i < voteBtns.length && pairIdx < STATES.length; i += 2) {{
+                var upBtn   = voteBtns[i];
+                var downBtn = voteBtns[i + 1];
+                
+                if (!upBtn || !downBtn) {{
+                    /* Jeśli nie mamy pary, przeskoczymy do następnego stanu */
+                    pairIdx++;
+                    i--; /* Zmniejsz i aby sprawdzić następny przycisk */
+                    continue;
+                }}
+                
+                var state = STATES[pairIdx];
+                applyStyle(upBtn,   state === 'up'   ? UP_ACTIVE   : DEFAULT);
+                applyStyle(downBtn, state === 'down' ? DOWN_ACTIVE : DEFAULT);
+                pairIdx++;
             }}
         }}
 
@@ -192,6 +254,9 @@ def _inject_vote_button_styles(collection: list[dict]) -> None:
 def render() -> None:
     """Renderuje zakładkę Baza Filmów."""
 
+    lang = st.session_state.get("app_language", "Polski")
+    t = T[lang]
+
     st.markdown("""
         <style>
         .orange-bin button {
@@ -215,13 +280,27 @@ def render() -> None:
             justify-content: center !important;
             line-height: 1 !important;
             padding: 0.35rem 0.7rem !important;
+            background: #0a0b0e !important;
+            color: #e0d8c8 !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
         }
         /* Większe przyciski + w rekomendacjach */
         div[data-testid="stButton"] button[title="Dodaj film do listy"] {
             min-width: 48px !important;
             min-height: 48px !important;
             font-size: 24px !important;
-            padding: 0.3rem !important;
+            padding: 0 !important;
+            background: #0a0b0e !important;
+            border: 1px solid rgba(255, 255, 255, 0.4) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        /* Usuwamy domyślny margines paragrafu wewnątrz przycisku dla idealnego wyśrodkowania */
+        div[data-testid="stButton"] button[title="Dodaj film do listy"] p {
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: normal !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -229,15 +308,14 @@ def render() -> None:
     if "my_collection" not in st.session_state:
         st.session_state.my_collection = load_collection()
 
-    st.markdown("""
+    st.markdown(f"""
     <div style="margin-bottom:1.5rem">
-        <div class="question-label">Personalizacja</div>
+        <div class="question-label">{t['personalization']}</div>
         <div style="font-family:'DM Serif Display',serif;font-size:1.8rem;color:#e0d8c8;margin:0.3rem 0 0.6rem">
-            Twoja Baza & Rekomendacje
+            {t['title']}
         </div>
         <div style="font-size:13px;color:#c08a3a;line-height:1.7">
-            Zarządzaj swoją listą ulubionych tytułów i otrzymaj sugestie dopasowane do Twojego gustu
-            na podstawie analizy wektorowej dokumentacji TMDB 5000.
+            {t['desc']}
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -245,65 +323,68 @@ def render() -> None:
     col_list, col_recs = st.columns([3, 2], gap="large")
 
     with col_list:
-        question_label("Twoja Kolekcja")
+        question_label(t['my_coll'])
 
         with st.container():
             all_movies_df = get_all_movies()
             movie_titles = sorted(all_movies_df["title"].unique().tolist())
 
-            selected_title = st.selectbox(
-                "Wyszukaj film w bazie TMDB...",
-                options=[""] + movie_titles,
-                format_func=lambda x: "🔍 Zacznij wpisywać tytuł filmu..." if x == "" else x,
-                label_visibility="collapsed"
-            )
+            col_search, col_btn = st.columns([0.75, 0.25])
+            with col_search:
+                selected_title = st.selectbox(
+                    t['search_label'],
+                    options=[""] + movie_titles,
+                    format_func=lambda x: t['search_ph'] if x == "" else x,
+                    label_visibility="collapsed"
+                )
 
-            if st.button("➕ Dodaj do kolekcji", use_container_width=True):
-                if selected_title:
-                    if any(m['title'] == selected_title for m in st.session_state.my_collection):
-                        st.toast(f"Film '{selected_title}' jest już na Twojej liście!", icon="ℹ️")
-                    else:
-                        movie_data = all_movies_df[all_movies_df["title"] == selected_title].iloc[0]
-                        st.session_state.my_collection.append({
-                            "title": str(movie_data["title"]),
-                            "year": str(movie_data["release_year"]),
-                            "genre": ", ".join(movie_data["genres"]),
-                            "score": str(movie_data["vote_average"]),
-                            "vote": "none"
-                        })
-                        save_collection(st.session_state.my_collection)
-                        st.rerun()
+            with col_btn:
+                if st.button(t['add_btn'], use_container_width=True):
+                    if selected_title:
+                        if any(m['title'] == selected_title for m in st.session_state.my_collection):
+                            st.toast(t['already_toast'].format(selected_title), icon="ℹ️")
+                        else:
+                            movie_data = all_movies_df[all_movies_df["title"] == selected_title].iloc[0]
+                            st.session_state.my_collection.append({
+                                "title": str(movie_data["title"]),
+                                "year": str(movie_data["release_year"]),
+                                "genre": ", ".join(movie_data["genres"]),
+                                "score": str(movie_data["vote_average"]),
+                                "vote": "none"
+                            })
+                            save_collection(st.session_state.my_collection)
+                            st.rerun()
 
         st.markdown('<div style="margin-top:1.2rem"></div>', unsafe_allow_html=True)
 
-        st.markdown('<div style="font-size:12px; color:#c8c8c8; margin-bottom:0.3rem; letter-spacing:0.04em">Widok</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="font-size:12px; color:#c8c8c8; margin-bottom:0.3rem; letter-spacing:0.04em">{t["view"]}</div>', unsafe_allow_html=True)
         view_mode = st.radio(
             "Tryb wyświetlania",
-            options=["Lista", "Kafelki", "Oś czasu"],
+            options=t['view_opt'],
             horizontal=True,
             label_visibility="collapsed",
             key="view_mode_selector"
         )
 
         st.markdown('<div style="margin-top:1rem"></div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px; color:#c8c8c8; margin-bottom:0.3rem; letter-spacing:0.04em">Sortuj</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="font-size:12px; color:#c8c8c8; margin-bottom:0.3rem; letter-spacing:0.04em">{t["sort"]}</div>', unsafe_allow_html=True)
         sort_option = st.radio(
             "Sortuj listę filmów",
-            options=["Domyślnie", "Alfabetycznie", "Ocena (malejąco)", "Rok (malejąco)"],
+            options=t['sort_opt'],
             horizontal=True,
             label_visibility="collapsed",
             key="collection_sort_option"
         )
 
-        if sort_option == "Alfabetycznie":
+        if sort_option in ["Alfabetycznie", "Alphabetical"]:
             collection_display = sorted(st.session_state.my_collection, key=lambda x: x["title"])
-        elif sort_option == "Ocena (malejąco)":
+        elif sort_option in ["Ocena (malejąco)", "Rating (descending)"]:
             collection_display = sorted(
                 st.session_state.my_collection,
                 key=lambda x: float(x.get("score") or 0.0),
                 reverse=True
             )
-        elif sort_option == "Rok (malejąco)":
+        elif sort_option in ["Rok (malejąco)", "Year (descending)"]:
             collection_display = sorted(
                 st.session_state.my_collection,
                 key=lambda x: int(x.get("year") or 0),
@@ -313,20 +394,20 @@ def render() -> None:
             collection_display = list(st.session_state.my_collection)
 
         if not st.session_state.my_collection:
-            st.info("Twoja lista jest pusta. Dodaj pierwszy film powyżej!")
+            st.info(t['empty'])
 
         # ── TRYB: LISTA ──────────────────────────────────────────────────────
-        elif view_mode == "Lista":
+        elif view_mode in ["Lista", "List"]:
             for movie in collection_display:
                 vote_status = movie.get("vote", "none")
                 original_idx = next(
-                    (idx for idx, m in enumerate(st.session_state.my_collection) if m["title"] == movie["title"]),
+                    (idx for idx, m in enumerate(st.session_state.my_collection) if m["title"] == movie["title"] and m["year"] == movie["year"]),
                     None
                 )
 
                 c_card, c_del = st.columns([0.78, 0.22], gap="xsmall")
                 with c_card:
-                    vote_label = {"up": "Ocena: 👍", "down": "Ocena: 👎"}.get(vote_status, "Brak oceny")
+                    vote_label = {"up": f"{t['rating_prefix']}👍", "down": f"{t['rating_prefix']}👎"}.get(vote_status, t['no_score'])
 
                     st.markdown(f"""
                     <div style="display:flex; justify-content:space-between; align-items:center;
@@ -347,14 +428,14 @@ def render() -> None:
 
                     vote_col_up, vote_col_down = st.columns([0.5, 0.5], gap="small")
                     with vote_col_up:
-                        if st.button("👍", key=f"vote_up_{movie['title']}", use_container_width=True):
+                        if st.button("👍", key=f"vote_up_list_{movie['title']}_{movie['year']}", use_container_width=True):
                             if original_idx is not None:
                                 new_vote = "none" if vote_status == "up" else "up"
                                 st.session_state.my_collection[original_idx]["vote"] = new_vote
                                 save_collection(st.session_state.my_collection)
                                 st.rerun()
                     with vote_col_down:
-                        if st.button("👎", key=f"vote_down_{movie['title']}", use_container_width=True):
+                        if st.button("👎", key=f"vote_down_list_{movie['title']}_{movie['year']}", use_container_width=True):
                             if original_idx is not None:
                                 new_vote = "none" if vote_status == "down" else "down"
                                 st.session_state.my_collection[original_idx]["vote"] = new_vote
@@ -363,7 +444,7 @@ def render() -> None:
 
                 with c_del:
                     st.markdown('<div class="orange-bin">', unsafe_allow_html=True)
-                    if st.button("🗑️", key=f"del_list_{movie['title']}"):
+                    if st.button("🗑️", key=f"del_list_{movie['title']}_{movie['year']}"):
                         if original_idx is not None:
                             st.session_state.my_collection.pop(original_idx)
                             save_collection(st.session_state.my_collection)
@@ -371,15 +452,15 @@ def render() -> None:
                     st.markdown('</div>', unsafe_allow_html=True)
 
             if st.session_state.my_collection:
-                _inject_vote_button_styles(st.session_state.my_collection)
+                _inject_vote_button_styles(collection_display)
 
         # ── TRYB: KAFELKI ────────────────────────────────────────────────────
-        elif view_mode == "Kafelki":
+        elif view_mode in ["Kafelki", "Tiles"]:
             grid_cols = st.columns(2)
             for idx, movie in enumerate(collection_display):
                 vote_status = movie.get("vote", "none")
                 original_idx = next(
-                    (i for i, m in enumerate(st.session_state.my_collection) if m["title"] == movie["title"]),
+                    (i for i, m in enumerate(st.session_state.my_collection) if m["title"] == movie["title"] and m["year"] == movie["year"]),
                     None
                 )
                 with grid_cols[idx % 2]:
@@ -391,21 +472,21 @@ def render() -> None:
                         </div>
                         """, unsafe_allow_html=True)
 
-                        vote_label = {"up": "Ocena: 👍", "down": "Ocena: 👎"}.get(vote_status, "")
+                        vote_label = {"up": f"{t['rating_prefix']}👍", "down": f"{t['rating_prefix']}👎"}.get(vote_status, "")
                         if vote_label:
                             st.markdown(f"<div style='font-size:11px; color:#999999; margin-bottom:4px'>{vote_label}</div>", unsafe_allow_html=True)
 
                         # Mniejsze odstępy między przyciskami — bardziej zwarte ustawienie
                         vote_cols = st.columns([0.45, 0.45], gap="small")
                         with vote_cols[0]:
-                            if st.button("👍", key=f"vote_up_grid_{movie['title']}", use_container_width=True):
+                            if st.button("👍", key=f"vote_up_grid_{movie['title']}_{movie['year']}", use_container_width=True):
                                 if original_idx is not None:
                                     new_vote = "none" if vote_status == "up" else "up"
                                     st.session_state.my_collection[original_idx]["vote"] = new_vote
                                     save_collection(st.session_state.my_collection)
                                     st.rerun()
                         with vote_cols[1]:
-                            if st.button("👎", key=f"vote_down_grid_{movie['title']}", use_container_width=True):
+                            if st.button("👎", key=f"vote_down_grid_{movie['title']}_{movie['year']}", use_container_width=True):
                                 if original_idx is not None:
                                     new_vote = "none" if vote_status == "down" else "down"
                                     st.session_state.my_collection[original_idx]["vote"] = new_vote
@@ -420,24 +501,24 @@ def render() -> None:
                                 '<div class="orange-bin" style="display:flex; align-items:center; justify-content:center; height:44px; width:100%; padding:0;">',
                                 unsafe_allow_html=True,
                             )
-                            if st.button("🗑️", key=f"del_grid_{movie['title']}", use_container_width=True):
+                            if st.button("🗑️", key=f"del_grid_{movie['title']}_{movie['year']}", use_container_width=True):
                                 if original_idx is not None:
                                     st.session_state.my_collection.pop(original_idx)
                                     save_collection(st.session_state.my_collection)
                                     st.rerun()
                             st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── TRYB: OŚ CZASU ───────────────────────────────────────────────────
-        elif view_mode == "Oś czasu":
-            sorted_collection = sorted(
-                st.session_state.my_collection,
-                key=lambda x: x['year'],
-                reverse=True
-            )
+            if st.session_state.my_collection:
+                # W trybie kafelkowym przyciski w DOM są ułożone kolumnami: 
+                # najpierw wszystkie parzyste (lewa kolumna), potem nieparzyste (prawa).
+                js_list = list(collection_display[0::2]) + list(collection_display[1::2])
+                _inject_vote_button_styles(js_list)
 
-            for i, movie in enumerate(sorted_collection):
+        # ── TRYB: OŚ CZASU ───────────────────────────────────────────────────
+        elif view_mode in ["Oś czasu", "Timeline"]:
+            for i, movie in enumerate(collection_display):
                 original_idx = next(
-                    (idx for idx, m in enumerate(st.session_state.my_collection) if m['title'] == movie['title']),
+                    (idx for idx, m in enumerate(st.session_state.my_collection) if m['title'] == movie['title'] and m["year"] == movie["year"]),
                     None
                 )
                 vote_status = movie.get("vote", "none")
@@ -465,14 +546,14 @@ def render() -> None:
                     # Szersze przyciski oceny — kolumna akcji ma teraz większy udział
                     vote_cols = st.columns([1, 1], gap="small")
                     with vote_cols[0]:
-                        if st.button("👍", key=f"vote_up_time_{movie['title']}", use_container_width=True):
+                        if st.button("👍", key=f"vote_up_time_{movie['title']}_{movie['year']}", use_container_width=True):
                             if original_idx is not None:
                                 new_vote = "none" if vote_status == "up" else "up"
                                 st.session_state.my_collection[original_idx]["vote"] = new_vote
                                 save_collection(st.session_state.my_collection)
                                 st.rerun()
                     with vote_cols[1]:
-                        if st.button("👎", key=f"vote_down_time_{movie['title']}", use_container_width=True):
+                        if st.button("👎", key=f"vote_down_time_{movie['title']}_{movie['year']}", use_container_width=True):
                             if original_idx is not None:
                                 new_vote = "none" if vote_status == "down" else "down"
                                 st.session_state.my_collection[original_idx]["vote"] = new_vote
@@ -480,7 +561,7 @@ def render() -> None:
                                 st.rerun()
 
                     st.markdown('<div class="orange-bin" style="margin-top:0.4rem">', unsafe_allow_html=True)
-                    if st.button("🗑️", key=f"del_time_{movie['title']}"):
+                    if st.button("🗑️", key=f"del_time_{movie['title']}_{movie['year']}"):
                         if original_idx is not None:
                             st.session_state.my_collection.pop(original_idx)
                             save_collection(st.session_state.my_collection)
@@ -489,15 +570,18 @@ def render() -> None:
 
                 st.markdown('<div style="margin-bottom:12px"></div>', unsafe_allow_html=True)
 
-    with col_recs:
-        question_label("AI Sugestie")
+            if st.session_state.my_collection:
+                _inject_vote_button_styles(collection_display)
 
-        st.markdown("""
+    with col_recs:
+        question_label(t['ai_recs_label'])
+
+        st.markdown(f"""
         <div style="background:linear-gradient(135deg, rgba(220,160,60,0.08) 0%, rgba(180,40,60,0.05) 100%);
                     border:1px dashed rgba(220,160,60,0.3); padding:20px; border-radius:12px; text-align:center; margin-bottom:1.5rem">
             <div style="font-size:24px; margin-bottom:8px">✨</div>
             <div style="font-size:12px; color:#c08a3a; font-weight:500">
-                Na podstawie Twojego gustu polecamy:
+                {t['recs_desc']}
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -505,7 +589,7 @@ def render() -> None:
         recommendations = recommend_movies(st.session_state.my_collection, all_movies_df)
 
         if not recommendations:
-            st.info("Dodaj filmy do swojej listy, aby otrzymać rekomendacje AI automatycznie.")
+            st.info(t['empty'])
         else:
             for movie in recommendations:
                 row_cols = st.columns([0.8, 0.2], gap='small')
@@ -516,14 +600,14 @@ def render() -> None:
                         <div style="font-size:14px; font-weight:700; color:#e0d8c8">{movie['title']} ({movie['year']})</div>
                         <div style="font-size:11px; color:#888899; margin-top:4px">{movie['genre']}</div>
                         <div style="font-size:10px; color:#c08a3a; font-family:'JetBrains Mono',monospace; margin-top:8px">
-                            Zgodność profilu: {movie['match']}
+                            Match: {movie['match']}
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
                 with row_cols[1]:
                     if st.button('➕', key=f"add_rec_{movie['title']}", help='Dodaj film do listy', use_container_width=True):
                         if any(m['title'] == movie['title'] for m in st.session_state.my_collection):
-                            st.toast(f"Film '{movie['title']}' jest już na Twojej liście!", icon='ℹ️')
+                            st.toast(t['already_toast'].format(movie['title']), icon='ℹ️')
                         else:
                             movie_data = all_movies_df[all_movies_df['title'] == movie['title']].iloc[0]
                             st.session_state.my_collection.append({
@@ -534,8 +618,8 @@ def render() -> None:
                                 'vote': 'none'
                             })
                             save_collection(st.session_state.my_collection)
-                            st.toast(f"Dodano '{movie['title']}' do Twojej listy!", icon='✅')
+                            st.toast(t['add_rec_toast'].format(movie['title']), icon='✅')
                             st.rerun()
 
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.info("💡 Silnik RAG analizuje opisy Twoich filmów i szuka w bazie TMDB dokumentów o najbardziej zbliżonych wektorach cech.")
+    st.info(t['rag_info'])

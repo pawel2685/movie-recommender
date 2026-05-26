@@ -1,4 +1,5 @@
 streamlit
+streamlit-cookies-manager
 faiss-cpu
 sentence-transformers
 langchain-community

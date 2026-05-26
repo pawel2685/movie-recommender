@@ -104,7 +104,8 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 
 /* ── BUTTONS ── */
 .stButton > button {
-    background: linear-gradient(135deg, #c08a3a 0%, #e0a030 100%) !important;
+    /* Tutaj zmieniasz globalny kolor przycisków */
+    background: #1c2030 !important; 
     color: #0a0b0e !important; border: none !important;
     border-radius: 8px !important;
     font-family: 'DM Sans', sans-serif !important;
@@ -131,7 +132,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 .answer-card {
     background: linear-gradient(160deg, #111318 0%, #0f1015 100%);
     border: 1px solid rgba(220,160,60,0.12);
-    border-radius: 14px; padding: 1.6rem 1.8rem;
+    border-radius: 14px; padding: 2.2rem 2.4rem;
     margin-top: 1.2rem; position: relative;
 }
 .answer-card::before {
@@ -145,13 +146,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
     margin-bottom: 1rem; padding-bottom: 0.8rem;
     border-bottom: 1px solid rgba(255,255,255,0.04);
 }
-.answer-badge {
-    background: rgba(220,160,60,0.12); color: #c08a3a;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-    padding: 3px 10px; border-radius: 20px;
-}
-.answer-text { font-size: 15px; color: #ccc0a8; line-height: 1.75; font-weight: 300; }
+.answer-text { font-size: 16px; color: #ccc0a8; line-height: 1.85; font-weight: 300; }
 
 /* ── SOURCES ── */
 .sources-header {

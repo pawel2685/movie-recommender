@@ -3,6 +3,7 @@ from __future__ import annotations
 import streamlit as st
 
 from config.settings import DEFAULT_TOP_K, DEFAULT_MODEL
+from utils.history import ConversationHistory
 
 _DEFAULTS: dict = {
     "top_k": DEFAULT_TOP_K,
@@ -18,6 +19,9 @@ def init_session() -> None:
     for key, value in _DEFAULTS.items():
         if key not in st.session_state:
             st.session_state[key] = value
+
+    if "conversation_history" not in st.session_state:
+        st.session_state.conversation_history = ConversationHistory()
 
 
 def get_history() -> list[dict]:
@@ -46,6 +50,17 @@ def set_result(question: str, result: dict) -> None:
 def set_quick_question(q: str) -> None:
     st.session_state.current_question = q
     st.session_state.current_result = None
+
+
+def get_conversation_history() -> ConversationHistory:
+    """Pobiera obiekt historii rozmów."""
+    return st.session_state.conversation_history
+
+
+def add_to_history(question: str, answer: str) -> None:
+    """Dodaje rozmowę do historii."""
+    history_obj = get_conversation_history()
+    history_obj.add_conversation(question, answer)
 
 
 def get_test_results() -> list[dict]:

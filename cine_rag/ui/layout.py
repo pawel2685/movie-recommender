@@ -4,6 +4,9 @@ Stałe elementy layoutu: hero header i sidebar.
 """
 
 from __future__ import annotations
+import os
+import requests
+from dotenv import load_dotenv
 import streamlit as st
 
 from config.settings  import DATASET_SIZE, DEFAULT_MODEL, MIN_TOP_K, MAX_TOP_K, DEFAULT_TOP_K
@@ -14,29 +17,93 @@ from ui.components    import (
 import utils.session as sess
 
 
+T = {
+    "Polski": {
+        "eyebrow": "RAG · TMDB 5000 · Asystent AI",
+        "title": "Asystent <em>Filmowy</em>",
+        "sub": "System odpowiadający na pytania wyłącznie na podstawie zamkniętej dokumentacji filmowej.",
+        "stat_movies": "Filmy w bazie",
+        "stat_model": "Model embeddingów",
+        "stat_metric": "Metryka podobieństwa",
+        "ver": "v0.1 — TMDB 5000 · RAG",
+        "status": "Status systemu",
+        "status_db": "Baza wektorowa: aktywna",
+        "status_model": "Model embeddingów: załadowany",
+        "status_llm_on": "LLM API: aktywne",
+        "status_llm_off": "LLM API: brak połączenia",
+        "params": "Parametry",
+        "top_k": "Liczba fragmentów (top-k)",
+        "top_k_help": "Ile najlepszych fragmentów zwrócić z bazy wektorowej",
+        "scores": "Pokaż wyniki podobieństwa",
+        "session": "Sesja",
+        "metrics_q": "Pytania",
+        "metrics_h": "Trafienia",
+        "history": "Historia pytań",
+        "clear": "🗑 Wyczyść sesję",
+        "open_menu": "Otwórz menu"
+    },
+    "English": {
+        "eyebrow": "RAG · TMDB 5000 · AI Assistant",
+        "title": "Movie <em>Assistant</em>",
+        "sub": "A system that answers questions based solely on closed movie documentation.",
+        "stat_movies": "Movies in database",
+        "stat_model": "Embedding model",
+        "stat_metric": "Similarity metric",
+        "ver": "v0.1 — TMDB 5000 · RAG",
+        "status": "System Status",
+        "status_db": "Vector DB: active",
+        "status_model": "Embedding model: loaded",
+        "status_llm_on": "LLM API: active",
+        "status_llm_off": "LLM API: no connection",
+        "params": "Parameters",
+        "top_k": "Number of chunks (top-k)",
+        "top_k_help": "How many top fragments to return from the vector database",
+        "scores": "Show similarity scores",
+        "session": "Session",
+        "metrics_q": "Questions",
+        "metrics_h": "Hits",
+        "history": "Question History",
+        "clear": "🗑 Clear session",
+        "open_menu": "Open menu"
+    }
+}
+
+# ── HELPERS ──────────────────────────────────────────────────────────────────
+
+@st.cache_data(ttl=30)
+def check_ollama_status() -> bool:
+    """Sprawdza dostępność serwera Ollama wysyłając lekkie zapytanie GET."""
+    url = os.getenv("OLLAMA_API_URL", "http://localhost:11434")
+    try:
+        resp = requests.get(f"{url}/api/tags", timeout=1)
+        return resp.status_code == 200
+    except:
+        return False
+
 # ── HERO ──────────────────────────────────────────────────────────────────────
 
 def render_hero() -> None:
+    lang = st.session_state.get("app_language", "Polski")
+    t = T[lang]
     st.markdown(f"""
     <div class="hero">
-        <div class="hero-eyebrow">RAG · TMDB 5000 · Asystent AI</div>
-        <h1>Asystent <em>Filmowy</em></h1>
+        <div class="hero-eyebrow">{t['eyebrow']}</div>
+        <h1>{t['title']}</h1>
         <p class="hero-sub">
-            System odpowiadający na pytania wyłącznie na podstawie
-            zamkniętej dokumentacji filmowej.
+            {t['sub']}
         </p>
         <div class="hero-stats">
             <div>
                 <div class="hero-stat-num">{DATASET_SIZE:,}</div>
-                <div class="hero-stat-label">Filmy w bazie</div>
+                <div class="hero-stat-label">{t['stat_movies']}</div>
             </div>
             <div>
                 <div class="hero-stat-num">all-MiniLM</div>
-                <div class="hero-stat-label">Model embeddingów</div>
+                <div class="hero-stat-label">{t['stat_model']}</div>
             </div>
             <div>
                 <div class="hero-stat-num">cos. sim.</div>
-                <div class="hero-stat-label">Metryka podobieństwa</div>
+                <div class="hero-stat-label">{t['stat_metric']}</div>
             </div>
         </div>
     </div>
@@ -52,48 +119,58 @@ def render_sidebar() -> tuple[int, str, bool]:
     Returns:
         (top_k, model_name, show_scores)
     """
+    lang = st.session_state.get("app_language", "Polski")
+    t = T[lang]
     with st.sidebar:
         # Logo
-        st.markdown("""
+        st.markdown(f"""
         <div class="sidebar-logo">🎬 CineRAG</div>
-        <div class="sidebar-ver">v0.1 — TMDB 5000 · RAG</div>
+        <div class="sidebar-ver">{t['ver']}</div>
         """, unsafe_allow_html=True)
 
         section_divider()
 
+        llm_active = check_ollama_status()
+
         # Status systemu
-        section_label("Status systemu")
-        render_status_line("Baza wektorowa: aktywna",  active=True)
-        render_status_line("Model embeddingów: załadowany", active=True)
-        render_status_line("LLM API: brak połączenia", active=False)
+        section_label(t['status'])
+        render_status_line(t['status_db'],  active=True)
+        render_status_line(t['status_model'], active=True)
+        render_status_line(t['status_llm_on'] if llm_active else t['status_llm_off'], active=llm_active)
 
         section_divider()
 
         # Parametry
-        section_label("Parametry")
+        section_label(t['params'])
         top_k = st.slider(
-            "Liczba fragmentów (top-k)",
+            t['top_k'],
             MIN_TOP_K, MAX_TOP_K, DEFAULT_TOP_K,
-            help="Ile najlepszych fragmentów zwrócić z bazy wektorowej",
+            help=t['top_k_help'],
+        )
+        st.selectbox(
+            "Język / Language",
+            options=["Polski", "English"],
+            index=0,
+            key="app_language"
         )
         model_name = DEFAULT_MODEL
-        show_scores = st.toggle("Pokaż wyniki podobieństwa", value=True)
+        show_scores = st.toggle(t['scores'], value=True)
 
         section_divider()
 
         # Statystyki sesji
-        section_label("Sesja")
+        section_label(t['session'])
         col_a, col_b = st.columns(2)
         with col_a:
-            st.metric("Pytania", len(sess.get_history()))
+            st.metric(t['metrics_q'], len(sess.get_history()))
         with col_b:
-            st.metric("Trafienia", sess.count_hits())
+            st.metric(t['metrics_h'], sess.count_hits())
         section_divider()
 
         # Historia
         history = sess.get_history()
         if history:
-            section_label("Historia pytań")
+            section_label(t['history'])
             current_q = sess.get_current_question()
             for item in reversed(history[-8:]):
                 render_history_item(item, current_q)
@@ -102,7 +179,7 @@ def render_sidebar() -> tuple[int, str, bool]:
 
         # Wyczyść sesję
         st.markdown('<div class="btn-secondary">', unsafe_allow_html=True)
-        if st.button("🗑 Wyczyść sesję", use_container_width=True):
+        if st.button(t['clear'], use_container_width=True):
             sess.clear_session()
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
@@ -114,6 +191,8 @@ def inject_sidebar_toggle() -> None:
     Wstrzykuje pływający przycisk ▶ który wysuwa sidebar gdy jest schowany.
     Działa przez kliknięcie wbudowanego przycisku Streamlit via JS.
     """
+    lang = st.session_state.get("app_language", "Polski")
+    t = T[lang]
     st.markdown("""
     <style>
     /* Pływający przycisk toggle */
@@ -160,7 +239,7 @@ def inject_sidebar_toggle() -> None:
     }
     </style>
 
-    <div id="sidebar-toggle-btn" title="Otwórz menu">▶</div>
+    <div id="sidebar-toggle-btn" title="{t['open_menu']}">▶</div>
 
     <script>
     (function() {
